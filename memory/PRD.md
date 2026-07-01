@@ -57,6 +57,15 @@ Build PalmMitra from scratch — a premium AI Life Guidance Platform where palm 
 - PalmMatch result page: "Share Card" button generates a branded PNG (html-to-image, `skipFonts:true` to avoid CORS font-fetch failures) — near-black card with PalmMitra brand, ॐ Yugal Rekha, names A♥B, big compat %, verdict, top-3 category bars, mandala watermark, "Reveal yours → palmmitra.in" CTA. Uses Web Share API (files) on mobile, download fallback on desktop. Growth/virality loop.
 - Verified: card downloads and renders correctly via browser test.
 
+## Monetization Overhaul — subscription-first (2026-07-01)
+Complete pricing/monetization rearchitecture. All values live in Mongo `app_config` (config_id="pricing"), admin-editable, nothing hardcoded.
+- **Positioning**: Membership is the primary product; ₹299 report is the entry/acquisition hook; Elite removed (yearly membership is the premium anchor).
+- **Pricing**: Membership Monthly ₹399 / Yearly ₹3,499 (Save 27%, ~3mo free). Report ₹299. PalmMatch lowered ₹4,999→₹1,999.
+- **Backend**: `GET /api/config` (public), `GET/PUT /api/admin/config`, `_resolve_plan` (config-driven), membership_monthly/yearly + wallet_* plans in create-order/verify, `GET /api/wallet`, `POST /api/chat/{id}/estimate` (heuristic complexity classifier → tier), rewritten `POST /api/chat/{id}/message` (free-limit → member(FUP 5/day) → wallet confirm-to-pay). Collections: `app_config`, `wallet_transactions`; user fields `wallet_balance_inr`, `free_questions_used`.
+- **Wallet**: packs ₹99/199(+₹31)/499(+₹126)/999(+₹351), hidden from public pricing (only in chat/post-report). Dynamic per-question tiers ₹5/10/20/40 with reason + confirm before deduct. 2 free questions/user lifetime.
+- **Frontend**: Landing membership-first pricing (monthly/yearly toggle, tracing beam, emotional-outcome bullets); rewritten Chat (wallet + member badge + free pill, typewriter reveal, suggestions, confirm modal, membership gate + recharge); Report "Continue your journey → AI Palm Guide" banner; Admin Pricing tab editor.
+- **Verified**: testing_agent iteration_5 — 6/6 backend + 4/4 frontend flows passed, no blocking issues. NOTE: Razorpay is LIVE test mode (not mock) → payment completion (membership/wallet/unlock) requires the real checkout modal and is not auto-tested; order-creation is verified.
+
 ## Next Tasks
 1. Optional polish: hero "40+"→"15+ markers"; refine Nav/Footer `P` mark to copper; add PalmMatch to Dashboard list.
 2. Razorpay webhook listener (`POST /api/payment/webhook`) — prevent lost revenue on early browser close.
