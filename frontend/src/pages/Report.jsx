@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { api, API } from "../lib/api";
+import { track } from "../lib/analytics";
 import Nav from "../components/Nav";
 import { Lock, Download, Share2, Sparkles, Heart, Briefcase, Coins, Activity, Brain, Star, ShieldCheck, TrendingUp, Award, Zap, MessageCircle } from "lucide-react";
 import { toast, Toaster } from "sonner";
@@ -72,6 +73,7 @@ export default function Report() {
 
   const unlock = async (plan = "insight") => {
     setUnlocking(true);
+    track("payment_initiated", { plan, report_id: id });
     try {
       const { data: order } = await api.post("/payment/create-order", { report_id: id, plan });
       if (order.mock) {

@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import { track } from "../lib/analytics";
 import {
   Sparkles, Brain, Heart, Briefcase, Coins, Activity,
   ShieldCheck, Zap, TrendingUp, Star, ChevronDown
@@ -30,6 +31,7 @@ const Section = ({ id, children, className = "" }) => (
 );
 
 export default function Landing() {
+  React.useEffect(() => { track("landing_view"); }, []);
   return (
     <div className="min-h-screen bg-black text-white" data-testid="landing-page">
       <Nav />

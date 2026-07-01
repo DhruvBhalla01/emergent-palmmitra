@@ -1,8 +1,9 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Nav from "../components/Nav";
 import { useAuth } from "../lib/AuthContext";
 import { api } from "../lib/api";
+import { track } from "../lib/analytics";
 import { Upload as UploadIcon, Camera, X, Check } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
