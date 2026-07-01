@@ -39,7 +39,13 @@ Build PalmMitra from scratch — a premium AI Life Guidance Platform where palm 
 - **P2** Blog / SEO / SSR-ready pages
 - **P2** Apple sign-in
 
+## Landing Redesign (2026-07-01)
+- Rewrote `Landing.jsx` with luxury bento system per `design_guidelines.json`: asymmetric 12-col hero + glass stat bento, editorial ribbon marquee, tetris benefits grid, `grid-exposure` technical borders, framer-motion scroll reveals, tracing-beam (rotating conic-gradient) border on the "Plus" pricing tier, massive footer wordmark.
+- Accent: blended copper `#D97757` (primary) + gold `#E4B248` (micro-accents/stars) per user choice.
+- All existing `data-testid`s preserved. Verified via screenshots (hero/benefits/pricing render cleanly).
+
 ## Next Tasks
-1. Add real Razorpay keys → go live
-2. Razorpay Subscriptions API for auto-renewal of Plus
-3. Admin dashboard
+1. Razorpay webhook listener (`POST /api/payment/webhook`) — prevent lost revenue on early browser close
+2. Apply bento/tracing-beam styling to internal pages (Pricing, Upload scanner animation)
+3. Add real Razorpay keys → go live
+4. Refactor high-complexity backend fns + large React components (P2)
