@@ -1,103 +1,104 @@
 {
-  "theme": "dark",
-  "archetype": "5 (Luxury)",
-  "design_philosophy": "Apple level simplicity, Headspace level calmness, Notion level polish, Stripe level trust, Luxury fashion brand aesthetics. No gradients everywhere. No cheap glowing buttons. No cartoon illustrations. Lots of white space. Perfect typography. Luxury spacing. Micro animations. Glassmorphism only where necessary. Rounded corners. Smooth transitions.",
-  "colors": {
-    "background": {
-      "default": "#000000",
-      "surface": "#0A0A0A",
-      "surface_elevated": "#141414",
-      "glass": "rgba(20, 20, 20, 0.7)"
-    },
-    "primary": {
-      "DEFAULT": "#D4AF37",
-      "light": "#F5D061",
-      "dark": "#997A15",
-      "foreground": "#000000"
-    },
-    "text": {
-      "primary": "#FFFFFF",
-      "secondary": "#E0E0E0",
-      "muted": "#A0A0A0"
-    },
-    "border": {
-      "default": "rgba(255, 255, 255, 0.1)",
-      "gold": "rgba(212, 175, 55, 0.3)",
-      "focus": "#D4AF37"
-    }
+  "theme_and_archetype": {
+    "domain": "AI Palmistry / Premium Guidance",
+    "theme": "Dark",
+    "archetype": "Archetype 5 (Luxury) mixed with Archetype 4 (Swiss/High-Contrast)",
+    "reasoning": "Needs to feel world-class, trusted, and expensive. Avoiding generic SaaS purple/blue tech in favor of deep cinematic darkness with warm, human (copper/amber) highlights."
+  },
+  "color_palette": {
+    "background_primary": "#050505",
+    "background_secondary": "#0A0A0A",
+    "background_tertiary": "#121212",
+    "text_primary": "#F4F4F5",
+    "text_secondary": "#A1A1AA",
+    "text_tertiary": "#71717A",
+    "accent_primary": "#D97757",
+    "accent_primary_hover": "#E88D70",
+    "accent_secondary": "#C7B3A1",
+    "border_subtle": "rgba(255, 255, 255, 0.08)",
+    "border_strong": "rgba(255, 255, 255, 0.15)",
+    "glass_surface": "rgba(255, 255, 255, 0.03)",
+    "error": "#EF4444",
+    "success": "#10B981"
   },
   "typography": {
+    "pairing_strategy": "Unexpected highly structured editorial sans paired with an ancient-feeling serif and technical mono.",
     "fonts": {
-      "heading": "'Playfair Display', serif",
-      "body": "'Outfit', sans-serif",
-      "mono": "'JetBrains Mono', monospace"
+      "heading": "Clash Display",
+      "accent_serif": "Cormorant Garamond",
+      "body": "Manrope",
+      "mono": "JetBrains Mono"
     },
-    "scale": {
-      "h1": "text-5xl sm:text-6xl tracking-tight leading-none font-medium",
-      "h2": "text-3xl sm:text-4xl tracking-tight font-medium",
-      "h3": "text-2xl sm:text-3xl tracking-tight font-medium",
-      "h4": "text-xl font-medium",
-      "body": "text-base sm:text-lg leading-relaxed text-secondary",
-      "small": "text-sm text-muted uppercase tracking-[0.2em]"
+    "scales": {
+      "h1": "text-5xl md:text-7xl tracking-tighter leading-none font-medium",
+      "h2": "text-4xl md:text-5xl tracking-tight leading-tight",
+      "h3": "text-2xl md:text-3xl tracking-tight",
+      "body_lg": "text-lg leading-relaxed text-text_secondary font-light",
+      "body": "text-base leading-relaxed text-text_secondary font-light",
+      "overline": "text-xs md:text-sm uppercase tracking-[0.2em] font-mono text-accent_secondary",
+      "ai_data": "text-sm font-mono text-text_secondary"
     }
   },
   "spacing_and_layout": {
-    "generous_padding": "p-8 sm:p-12",
-    "bento_grid": {
-      "container": "grid grid-cols-1 md:grid-cols-12 gap-8",
-      "hero_card": "col-span-full md:col-span-8 row-span-2",
-      "standard_card": "col-span-1 md:col-span-4",
-      "tall_card": "col-span-1 md:col-span-4 row-span-2"
+    "section_padding": "py-24 md:py-32",
+    "container": "max-w-7xl mx-auto px-6 md:px-12",
+    "grid_bento": "grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8",
+    "radius_system": {
+      "cards": "rounded-2xl",
+      "buttons": "rounded-full",
+      "inputs": "rounded-lg"
     },
-    "corners": "rounded-2xl sm:rounded-3xl",
-    "section_spacing": "py-24 sm:py-32"
+    "border_thickness": "border-[1px]"
   },
-  "surfaces_and_effects": {
-    "glassmorphism": "backdrop-blur-xl bg-black/60 border border-white/10",
-    "card": "bg-[#0A0A0A] border border-white/10 hover:border-[#D4AF37]/50 transition-colors duration-300",
-    "premium_paywall_blur": "backdrop-blur-md bg-black/40",
-    "shadows": {
-      "subtle": "shadow-[0_8px_32px_rgba(212,175,55,0.05)]",
-      "glow": "shadow-[0_0_24px_rgba(212,175,55,0.2)]"
+  "motion_and_interactions": {
+    "hover_state": "transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(217,119,87,0.15)]",
+    "button_hover": "transition-all duration-300 ease-out hover:bg-accent_primary_hover",
+    "scroll_reveal": "opacity-0 translate-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700",
+    "glassmorphism": "backdrop-blur-xl bg-white/[0.02] border border-white/[0.08]"
+  },
+  "signature_elements": {
+    "the_aura": "A slow-moving, blurred orb of color (accent_primary) that follows the user's scroll progression behind the main content, acting as a dynamic gradient backdrop.",
+    "the_scanner": "During the 30s loading state, an ethereal, glowing copper line that vertically scans the uploaded palm image, leaving a trail of decoded AI data (in JetBrains Mono) that fades out slowly.",
+    "grid_exposure": "Using the 'Grid Borders (Technical Look)' for the pricing and feature showcase, exposing the skeleton of the UI to imply precision and data density."
+  },
+  "section_guidelines": {
+    "nav": "Sticky header with 'Crystal Glass' effect (backdrop-blur-2xl, bg-black/40). Navigation links hidden on mobile behind a sleek menu. Logo left, login/CTA right.",
+    "hero": "Massive 'Clash Display' typography centered. Background features the ethereal smoke image with low opacity (30%). A primary CTA button that glows subtly. An 'Overline' above the H1 in Mono font indicating 'VERSION 5.2 | VISION AI'.",
+    "social_proof": "The 'Editorial Ribbon' Marquee. Very slow, pale background or subtle border-y, featuring logos and text in JetBrains Mono or Cormorant Garamond italic.",
+    "upload_scanner": "The core interactive element. A bento-style large container (col-span-8) with a dashed border that glows on drag-over. Once uploaded, triggers the 'Scanner' signature element with a 30s premium loading state.",
+    "paywall_preview": "A highly blurred (backdrop-blur-3xl) overlay covering the 'Report' grid. Above the blur, a crisp, clean 'Grid Borders' pricing/unlock card. The user can see shapes and colors of their palm analysis behind the glass, building curiosity.",
+    "features_bento": "Tetris Grid bento layout. Dark surfaces, subtle 1px inner borders. Using JetBrains Mono for feature tags.",
+    "testimonials": "Minimalist portrait silhouettes inside tall bento cards. Quote in Cormorant Garamond italic to give it a human, profound, emotional weight.",
+    "pricing": "No standard cards. A 3-column technical grid (border-collapse style). The 'Plus ₹399/mo' tier highlighted with a subtle 'Tracing Beam' border effect.",
+    "footer": "Massive typography (text-[8vw]) for the brand name. Darkest background. Simple, elegant links."
+  },
+  "image_urls": [
+    {
+      "url": "https://images.unsplash.com/photo-1556703588-6eae2585e025?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwxfHxoYW5kcyUyMGFic3RyYWN0JTIwbGlnaHRpbmclMjBjaW5lbWF0aWN8ZW58MHx8fHwxNzgyOTI5OTgyfDA&ixlib=rb-4.1.0&q=85",
+      "category": "hero_background",
+      "description": "Left human palm close-up photography in cinematic lighting. Use with heavy dark overlay (bg-black/60) for the hero or upload section background."
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1761845086689-e90380bac227?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzB8MHwxfHNlYXJjaHwxfHxldGhlcmVhbCUyMGFic3RyYWN0JTIwZ2xvd2luZyUyMHNtb2tlJTIwZGFya3xlbnwwfHx8fDE3ODI5Mjk5ODJ8MA&ixlib=rb-4.1.0&q=85",
+      "category": "ambient_texture",
+      "description": "Abstract swirls of dark smoke with glowing red/amber embers. Use as a masked background texture behind the bento grid or paywall."
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1525547843489-d0aab95e5ce1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODl8MHwxfHNlYXJjaHwyfHxtaW5pbWFsaXN0JTIwcG9ydHJhaXQlMjBzaWxob3VldHRlJTIwZGFya3xlbnwwfHx8fDE3ODI5Mjk5ODJ8MA&ixlib=rb-4.1.0&q=85",
+      "category": "testimonial_avatar",
+      "description": "Minimalist silhouette portrait for high-end testimonial."
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1544502062-f82887f03d1c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODl8MHwxfHNlYXJjaHwxfHxtaW5pbWFsaXN0JTIwcG9ydHJhaXQlMjBzaWxob3VldHRlJTIwZGFya3xlbnwwfHx8fDE3ODI5Mjk5ODJ8MA&ixlib=rb-4.1.0&q=85",
+      "category": "testimonial_avatar",
+      "description": "Silhouette of man for premium testimonial."
     }
-  },
-  "components": {
-    "buttons": {
-      "primary": "bg-[#D4AF37] text-black hover:bg-[#F5D061] transition-all duration-300 rounded-full px-8 py-4 font-medium",
-      "secondary": "bg-transparent text-white border border-white/20 hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all duration-300 rounded-full px-8 py-4 font-medium"
-    },
-    "navigation": "sticky top-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/10 py-4",
-    "inputs": "bg-[#141414] border border-white/20 rounded-xl px-4 py-3 text-white focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
-  },
-  "media_and_images": {
-    "hero_background": {
-      "url": "https://images.pexels.com/photos/21031387/pexels-photo-21031387.jpeg",
-      "description": "Intricate golden wave patterns creating a luxurious abstract art piece. Use with strong dark overlay (bg-black/60) so text pops."
-    },
-    "ai_analysis_visual": {
-      "url": "https://images.pexels.com/photos/31650383/pexels-photo-31650383.jpeg",
-      "description": "Artistic abstract gold sphere. Used during the AI palm scan loading phase to represent the AI processing data."
-    },
-    "testimonial_avatar_1": {
-      "url": "https://images.unsplash.com/photo-1782109747977-59cd7d34e321",
-      "description": "Premium customer portrait for testimonial."
-    }
-  },
-  "animation_guidelines": {
-    "micro_interactions": "All interactive elements should have hover states (transform, opacity, border color) taking 300ms ease.",
-    "page_transitions": "Framer motion staggered fade-ups for bento grid cards.",
-    "loading_state": "Smooth looping rotation of the gold sphere with changing text for AI insights generation (20-40 sec). No jerky movements."
-  },
-  "testing_attributes": {
-    "rule": "All interactive and key informational elements MUST include a data-testid attribute in kebab-case format.",
-    "examples": ["data-testid='upload-palm-button'", "data-testid='premium-paywall-cta'"]
-  },
-  "instructions_to_main_agent": [
-    "Ensure 'Playfair Display' and 'Outfit' fonts are imported.",
-    "Use Shadcn components but strip default borders and shadows, replacing them with the dark luxury styles defined here.",
-    "The hero section should feel like an Apple product page: massive Playfair text, extremely clean layout, slow revealing animations.",
-    "For the report bento grid, use heavy padding (p-8) and avoid solid borders where possible—prefer very subtle white/10 borders.",
-    "The Paywall should use heavy backdrop blur (backdrop-blur-md) over the premium report content, with a centered glassmorphism card prompting payment via Razorpay.",
-    "Never use blue, green, or red alerts. Use muted white or gold for all status indicators."
-  ]
+  ],
+  "components_to_use": [
+    "Shadcn Dialog (for Auth/Modals)",
+    "Shadcn Tabs (for switching between Report sections in Dashboard)",
+    "Shadcn Progress (for AI loading state)",
+    "Framer Motion (for 'The Scanner' line and scroll reveals)"
+  ],
+  "instructions_to_main_agent": "Implement this design system with absolute precision. Use Clash Display for all primary headings, Cormorant Garamond specifically for elegant italicized quotes or sub-accents, and JetBrains Mono for AI data metrics. The background must be #050505, not a generic slate. Ensure the Paywall is built as a blurred overlay (backdrop-blur-3xl) sitting on top of the actual dashboard report components to build trust and curiosity. Integrate the 'Scanning Line' animation using Framer Motion during the 30s upload state. Do not use generic Shadcn Cards; instead, build custom Bento Grid cells with 1px border-white/10 and bg-white/[0.02]. All interactive elements MUST have a data-testid attribute in kebab-case."
 }
