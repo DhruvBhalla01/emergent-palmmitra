@@ -153,8 +153,30 @@ async def get_current_user(request: Request) -> User:
 
 # ====================== AUTH ROUTES ======================
 
+async def _issue_session_cookie(user_id: str, response: Response) -> str:
+    """Create a session_token, store it, and set httpOnly secure cookie."""
+    session_token = f"pm_sess_{uuid.uuid4().hex}"
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    await db.user_sessions.insert_one({
+        "user_id": user_id,
+        "session_token": session_token,
+        "expires_at": expires_at.isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        max_age=7 * 24 * 60 * 60,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+    )
+    return session_token
+
+
 @api_router.post("/auth/register")
-async def register(data: UserRegister):
+async def register(data: UserRegister, response: Response):
     existing = await db.users.find_one({"email": data.email}, {"_id": 0})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -174,20 +196,19 @@ async def register(data: UserRegister):
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.users.insert_one(doc)
-    token = create_jwt(user_id)
-    return {"token": token, "user": {"user_id": user_id, "email": data.email, "name": data.name, "is_premium": False}}
+    await _issue_session_cookie(user_id, response)
+    return {"user": {"user_id": user_id, "email": data.email, "name": data.name, "is_premium": False}}
 
 
 @api_router.post("/auth/login")
-async def login(data: UserLogin):
+async def login(data: UserLogin, response: Response):
     user = await db.users.find_one({"email": data.email}, {"_id": 0})
     if not user or user.get("auth_provider") != "email":
         raise HTTPException(status_code=401, detail="Invalid credentials")
     if not verify_password(data.password, user.get("password_hash", "")):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    token = create_jwt(user["user_id"])
+    await _issue_session_cookie(user["user_id"], response)
     return {
-        "token": token,
         "user": {
             "user_id": user["user_id"],
             "email": user["email"],

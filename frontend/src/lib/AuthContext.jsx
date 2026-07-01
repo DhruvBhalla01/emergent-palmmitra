@@ -28,8 +28,8 @@ export function AuthProvider({ children }) {
     checkAuth();
   }, [checkAuth]);
 
-  const login = (token, u) => {
-    if (token) localStorage.setItem("pm_token", token);
+  const login = (_token, u) => {
+    // Session is established via httpOnly cookie set by backend.
     setUser(u);
   };
 
@@ -39,7 +39,6 @@ export function AuthProvider({ children }) {
     } catch (err) {
       console.error("Logout request failed:", err);
     }
-    localStorage.removeItem("pm_token");
     setUser(null);
   };
 

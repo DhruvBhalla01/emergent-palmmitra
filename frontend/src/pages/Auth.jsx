@@ -21,7 +21,7 @@ export default function Auth() {
       const url = mode === "login" ? "/auth/login" : "/auth/register";
       const payload = mode === "login" ? { email, password } : { email, password, name };
       const { data } = await api.post(url, payload);
-      login(data.token, data.user);
+      login(null, data.user);
       toast.success("Welcome to PalmMitra");
       navigate("/dashboard");
     } catch (err) {

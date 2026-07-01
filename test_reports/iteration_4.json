@@ -1,0 +1,24 @@
+{
+  "summary": "Auth migration to httpOnly cookie session verified end-to-end. Backend: /api/auth/register and /api/auth/login return no 'token' field in body and set Set-Cookie: session_token HttpOnly, Secure, SameSite=None. /api/auth/me returns 200 with cookie, 401 without. /api/auth/logout clears cookie and subsequent /api/auth/me returns 401. All auth-gated endpoints (/api/palm/reports, /api/palm/reports/{id}, /api/referral/me, /api/subscription/status, /api/admin/stats) return 200 using only the cookie. Frontend: login on /auth with demo credentials redirects to /dashboard, localStorage has no 'pm_token' or 'session_token', document.cookie does not expose session_token (confirming HttpOnly), dashboard reload preserves session, report /report/rpt_efc49a2be09c fully loads, logout clears session and protected routes redirect to /auth.",
+  "tested_scope": ["backend", "frontend", "auth", "integration"],
+  "passed": [
+    "POST /api/auth/login: 200, Set-Cookie session_token HttpOnly Secure SameSite=None, body has {user:{...}} and NO 'token' field",
+    "POST /api/auth/register (new email): 200, Set-Cookie session_token present, body has NO 'token' field",
+    "GET /api/auth/me with cookie: 200 returns user object",
+    "GET /api/auth/me without cookie: 401",
+    "POST /api/auth/logout: 200, Set-Cookie session_token=\"\" Max-Age=0; subsequent /api/auth/me returns 401",
+    "Cookie-only auth works for: /api/palm/reports (200), /api/palm/reports/rpt_efc49a2be09c (200), /api/referral/me (200), /api/subscription/status (200), /api/admin/stats (200)",
+    "Frontend login flow redirects to /dashboard",
+    "localStorage contains NO pm_token or session_token after login (only rzp/posthog keys)",
+    "document.cookie does NOT contain session_token (HttpOnly enforced)",
+    "Dashboard reload persists user session via cookie",
+    "/report/rpt_efc49a2be09c loads full report (Overall 78, Personality/Career/Wealth/Love/Health/Leadership sections rendered)",
+    "Logout button clears session; visiting /dashboard redirects to /auth"
+  ],
+  "failed": [],
+  "action_items": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true,
+  "notes": "Post-logout 401s in console are expected (AuthContext /api/auth/me check on protected route before redirect). Razorpay preload warnings are pre-existing and unrelated."
+}

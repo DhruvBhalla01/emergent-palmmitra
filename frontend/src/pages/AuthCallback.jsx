@@ -23,9 +23,6 @@ export default function AuthCallback() {
     (async () => {
       try {
         const { data } = await api.post("/auth/session", { session_id: sessionId });
-        if (data.session_token) {
-          localStorage.setItem("pm_token", data.session_token);
-        }
         setUser(data.user);
         // Clean hash
         window.history.replaceState(null, "", window.location.pathname);
