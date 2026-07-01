@@ -10,6 +10,8 @@ import Analyzing from "./pages/Analyzing";
 import Report from "./pages/Report";
 import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
+import Admin from "./pages/Admin";
+import { BlogList, BlogPost } from "./pages/Blog";
 import { AuthProvider } from "./lib/AuthContext";
 
 function AppRouter() {
@@ -28,6 +30,9 @@ function AppRouter() {
       <Route path="/report/:id" element={<Report />} />
       <Route path="/chat/:id" element={<Chat />} />
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/admin" element={<Admin />} />
+      <Route path="/blog" element={<BlogList />} />
+      <Route path="/blog/:slug" element={<BlogPost />} />
     </Routes>
   );
 }

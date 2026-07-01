@@ -5,6 +5,7 @@ import Nav from "../components/Nav";
 import { useAuth } from "../lib/AuthContext";
 import { Sparkles, Plus, Lock, Copy, Gift, Crown, XCircle } from "lucide-react";
 import { toast, Toaster } from "sonner";
+import GuidanceCard from "../components/GuidanceCard";
 
 export default function Dashboard() {
   const [reports, setReports] = useState([]);
@@ -98,7 +99,8 @@ export default function Dashboard() {
         </div>
 
         {/* Top row: Subscription + Referrals */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {user.is_premium && <div className="md:col-span-2"><GuidanceCard /></div>}
           {/* Subscription */}
           <div className="rounded-3xl border border-white/[0.06] bg-[#0A0A0A] p-8" data-testid="subscription-card">
             <div className="flex items-center gap-2 mb-4">

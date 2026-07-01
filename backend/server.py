@@ -547,6 +547,203 @@ async def verify_payment(data: PaymentVerifyRequest, user: User = Depends(get_cu
     return {"ok": True, "unlocked": True}
 
 
+# ====================== COUPONS ======================
+
+class CouponValidateRequest(BaseModel):
+    code: str
+    plan: str
+
+
+class CouponCreateRequest(BaseModel):
+    code: str
+    discount_inr: int = 0
+    discount_pct: int = 0
+    max_uses: int = 100
+    active: bool = True
+
+
+@api_router.post("/coupon/validate")
+async def coupon_validate(data: CouponValidateRequest, user: User = Depends(get_current_user)):
+    coupon = await db.coupons.find_one({"code": data.code.strip().upper()}, {"_id": 0})
+    if not coupon or not coupon.get("active"):
+        raise HTTPException(status_code=404, detail="Invalid coupon")
+    if coupon.get("used_count", 0) >= coupon.get("max_uses", 0):
+        raise HTTPException(status_code=400, detail="Coupon exhausted")
+    plan_info = PLAN_PRICES.get(data.plan)
+    if not plan_info:
+        raise HTTPException(status_code=400, detail="Invalid plan")
+    base = plan_info["amount_inr"]
+    off = coupon.get("discount_inr", 0) + int(base * (coupon.get("discount_pct", 0) / 100))
+    final = max(0, base - off)
+    return {"code": coupon["code"], "discount_inr": off, "final_amount_inr": final, "base_amount_inr": base}
+
+
+# ====================== ANALYTICS ======================
+
+class EventRequest(BaseModel):
+    type: str
+    meta: Optional[Dict[str, Any]] = None
+
+
+@api_router.post("/analytics/event")
+async def track_event(data: EventRequest, request: Request):
+    user_id = None
+    try:
+        u = await get_current_user(request)
+        user_id = u.user_id
+    except Exception:
+        pass
+    await db.events.insert_one({
+        "user_id": user_id, "type": data.type, "meta": data.meta or {},
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    return {"ok": True}
+
+
+# ====================== DAILY / WEEKLY GUIDANCE ======================
+
+@api_router.get("/guidance/{cadence}")
+async def guidance(cadence: str, user: User = Depends(get_current_user)):
+    if cadence not in ("daily", "weekly"):
+        raise HTTPException(status_code=400, detail="Invalid cadence")
+    u = await db.users.find_one({"user_id": user.user_id}, {"_id": 0})
+    if not u.get("is_premium"):
+        raise HTTPException(status_code=402, detail="PalmMitra Plus required")
+
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    period = today if cadence == "daily" else datetime.now(timezone.utc).strftime("%Y-W%V")
+    cached = await db.guidance_cache.find_one({"user_id": user.user_id, "cadence": cadence, "period": period}, {"_id": 0})
+    if cached:
+        return cached["payload"]
+
+    latest = await db.palm_reports.find_one(
+        {"user_id": user.user_id, "status": "ready", "unlocked": True},
+        {"_id": 0}, sort=[("created_at", -1)],
+    )
+    if not latest:
+        raise HTTPException(status_code=400, detail="Unlock a report first to receive guidance")
+
+    prompt = (
+        f"Return JSON with keys theme (2-4 words), focus (1 sentence), do (array of 3 short actions), avoid (array of 2 short items), affirmation (1 sentence). "
+        f"Personalize this {cadence} guidance for the user based on their report. Period: {period}. "
+        f"Report: {json.dumps(latest.get('report', {}))[:4000]}"
+    )
+    chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=f"guide_{user.user_id}_{period}", system_message="Return only JSON. No markdown.").with_model("openai", "gpt-5.2")
+    text = await chat.send_message(UserMessage(text=prompt))
+    cleaned = re.sub(r"^```(?:json)?\s*", "", text.strip())
+    cleaned = re.sub(r"\s*```$", "", cleaned)
+    m = re.search(r"\{[\s\S]*\}", cleaned)
+    payload = json.loads(m.group(0) if m else cleaned)
+    await db.guidance_cache.insert_one({
+        "user_id": user.user_id, "cadence": cadence, "period": period,
+        "payload": payload, "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    return payload
+
+
+# ====================== BLOG ======================
+
+BLOG_POSTS = [
+    {"slug": "science-behind-ai-palm-reading", "title": "The Science Behind AI Palm Reading",
+     "excerpt": "How computer vision and large language models turn palm patterns into modern life guidance.",
+     "content": "For centuries palmistry lived in the mystical fringe. PalmMitra brings it into the age of AI.\n\n## How our engine works\nWe process each image through vision transformers to detect anatomical patterns: line curvature, mounts, phalange proportions, finger relationships. These features are then correlated with millions of behavioural signals in our language model to synthesize a modern life profile.\n\n## Why this differs from horoscopes\nHoroscopes cluster billions of people into 12 zodiac buckets. PalmMitra generates guidance uniquely from your hand — no shortcuts.\n\n## Privacy first\nYour images are analyzed and never sold. Delete them anytime.",
+     "cover": "https://images.pexels.com/photos/21031387/pexels-photo-21031387.jpeg",
+     "date": "2026-01-15"},
+    {"slug": "5-decisions-your-palm-can-clarify", "title": "5 Decisions Your Palm Can Clarify",
+     "excerpt": "From career pivots to relationship timing — how a modern palm profile helps you decide.",
+     "content": "Every decision fits a pattern. Here are five moments where PalmMitra earns its keep.\n\n1. Career pivots — When your risk profile and creativity scores align, big moves are lower-risk than they feel.\n2. Relationship timing — Your compatibility and love-style profile reveal what you actually need.\n3. Money bets — Wealth potential + decision style flag when to invest and when to wait.\n4. Health resets — Your health tendencies suggest which habits pay compounding returns.\n5. Creative launches — Peak creativity years are real. Use them.",
+     "cover": "https://images.pexels.com/photos/31650383/pexels-photo-31650383.jpeg",
+     "date": "2026-01-22"},
+    {"slug": "premium-guidance-vs-astrology-apps", "title": "Why Premium Guidance Beats Free Astrology Apps",
+     "excerpt": "The hidden cost of \"free\" — and what elegant, paid AI guidance really delivers.",
+     "content": "Free apps monetize your attention with ads. Premium guidance is designed to make you close the app and act.\n\n## The attention economy problem\nFree apps must maximize daily opens. Their incentives are misaligned with your growth.\n\n## Premium is aligned\nPalmMitra earns your money once, not your attention forever. That single shift changes everything.",
+     "cover": "https://images.pexels.com/photos/21031387/pexels-photo-21031387.jpeg",
+     "date": "2026-02-01"},
+]
+
+
+@api_router.get("/blog/posts")
+async def blog_list():
+    return [{k: v for k, v in p.items() if k != "content"} for p in BLOG_POSTS]
+
+
+@api_router.get("/blog/posts/{slug}")
+async def blog_post(slug: str):
+    post = next((p for p in BLOG_POSTS if p["slug"] == slug), None)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return post
+
+
+# ====================== ADMIN ======================
+
+def _is_admin(email: str) -> bool:
+    admin_emails = [e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").split(",") if e.strip()]
+    return email.lower() in admin_emails
+
+
+async def require_admin(user: User = Depends(get_current_user)) -> User:
+    if not _is_admin(user.email):
+        raise HTTPException(status_code=403, detail="Admin only")
+    return user
+
+
+@api_router.get("/admin/stats")
+async def admin_stats(user: User = Depends(require_admin)):
+    users_count = await db.users.count_documents({})
+    premium_count = await db.users.count_documents({"is_premium": True})
+    reports_count = await db.palm_reports.count_documents({})
+    unlocked_count = await db.palm_reports.count_documents({"unlocked": True})
+    orders = await db.payment_orders.find({"status": "paid"}, {"_id": 0, "amount_inr": 1}).to_list(10000)
+    revenue = sum(o.get("amount_inr", 0) for o in orders) / 100
+    return {
+        "users": users_count, "premium_users": premium_count,
+        "reports": reports_count, "unlocked_reports": unlocked_count,
+        "paid_orders": len(orders), "revenue_inr": revenue,
+    }
+
+
+@api_router.get("/admin/users")
+async def admin_users(user: User = Depends(require_admin)):
+    return await db.users.find({}, {"_id": 0, "password_hash": 0}).sort("created_at", -1).limit(100).to_list(100)
+
+
+@api_router.get("/admin/coupons")
+async def admin_list_coupons(user: User = Depends(require_admin)):
+    return await db.coupons.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
+
+
+@api_router.post("/admin/coupons")
+async def admin_create_coupon(data: CouponCreateRequest, user: User = Depends(require_admin)):
+    code = data.code.strip().upper()
+    existing = await db.coupons.find_one({"code": code}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Code exists")
+    doc = {
+        "code": code, "discount_inr": data.discount_inr, "discount_pct": data.discount_pct,
+        "max_uses": data.max_uses, "used_count": 0, "active": data.active,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.coupons.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+@api_router.delete("/admin/coupons/{code}")
+async def admin_delete_coupon(code: str, user: User = Depends(require_admin)):
+    await db.coupons.delete_one({"code": code.upper()})
+    return {"ok": True}
+
+
+@api_router.get("/admin/funnel")
+async def admin_funnel(user: User = Depends(require_admin)):
+    pipeline = [{"$group": {"_id": "$type", "count": {"$sum": 1}}}, {"$sort": {"count": -1}}]
+    events = await db.events.aggregate(pipeline).to_list(100)
+    return [{"type": e["_id"], "count": e["count"]} for e in events]
+
+
+
+
 # ====================== PDF EXPORT ======================
 
 def _build_pdf(report: Dict[str, Any], name: str, generated_on: str) -> bytes:
