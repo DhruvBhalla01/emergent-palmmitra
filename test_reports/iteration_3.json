@@ -1,0 +1,27 @@
+{
+  "summary": "Code-quality refactor regression pass. Full auth→dashboard→report→chat→payment→admin→logout flow validated on live URL. All targeted refactors verified: no React key warnings, no hook-dependency warnings, no swallowed errors on logout, chat message keys stable across id changes. Razorpay in LIVE test mode (mock:false) and bad-signature verify returns 400.",
+  "tested_scope": ["frontend", "backend", "auth", "integration"],
+  "passed": [
+    "Landing / loads, hero-analyze-btn present, no compile errors",
+    "POST /api/auth/login with demo@palmmitra.com/demo1234 returns JWT and redirects to /dashboard",
+    "Dashboard renders subscription-card and referral-card; report list populated (2 reports)",
+    "GET /api/palm/reports/rpt_efc49a2be09c → 200, unlocked=true, status=ready, 23 report sections, overall_score=78 rendered",
+    "Report page shows report-download-btn and report-chat-btn; paywall NOT shown (unlocked)",
+    "Chat /chat/rpt_efc49a2be09c: initial 8 messages loaded; after send new user+assistant appended → 10 messages; no key warnings",
+    "POST /api/auth/logout → 200 {ok:true}; nav-logout-btn click clears session and redirects to /",
+    "POST /api/payment/create-order → 200 with mock:false, real razorpay order_id (order_T8K...), key=rzp_test_T8KTEt6cMEBrXZ",
+    "POST /api/payment/verify with real order_id + bogus signature → 400 'Invalid signature' (HMAC check enforced)",
+    "GET /api/admin/stats → 200 with KPIs (users:6, premium_users:1, reports:5, unlocked_reports:5, paid_orders:6, revenue_inr:1894.0)",
+    "Console clean during full flow: 0 errors, 0 React key warnings, 0 hook-dependency warnings"
+  ],
+  "failed": [],
+  "action_items": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true,
+  "notes": {
+    "login_response_field": "backend returns 'token' (not 'access_token') — pre-existing contract, unchanged this iteration",
+    "verify_bad_sig_with_nonexistent_order": "returns 404 'Order not found'; with real order_id + bogus sig correctly returns 400 'Invalid signature'",
+    "palm_analyze": "not exercised per instruction (expensive LLM); existing unlocked report rpt_efc49a2be09c used"
+  }
+}

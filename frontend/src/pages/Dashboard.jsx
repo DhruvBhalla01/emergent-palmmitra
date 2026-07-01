@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import Nav from "../components/Nav";
@@ -16,23 +16,23 @@ export default function Dashboard() {
   const { user, loading: authLoading, checkAuth } = useAuth();
   const navigate = useNavigate();
 
+  const loadAll = useCallback(async () => {
+    try {
+      const [r, ref, s] = await Promise.all([
+        api.get("/palm/reports"),
+        api.get("/referral/me"),
+        api.get("/subscription/status"),
+      ]);
+      setReports(r.data || []);
+      setReferral(ref.data);
+      setSub(s.data);
+    } finally { setLoading(false); }
+  }, []);
+
   useEffect(() => {
     if (!authLoading && !user) { navigate("/auth"); return; }
-    if (user) {
-      (async () => {
-        try {
-          const [r, ref, s] = await Promise.all([
-            api.get("/palm/reports"),
-            api.get("/referral/me"),
-            api.get("/subscription/status"),
-          ]);
-          setReports(r.data || []);
-          setReferral(ref.data);
-          setSub(s.data);
-        } finally { setLoading(false); }
-      })();
-    }
-  }, [user, authLoading, navigate]);
+    if (user) { loadAll(); }
+  }, [user, authLoading, navigate, loadAll]);
 
   const copyCode = () => {
     if (!referral?.code) return;

@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import { api, API } from "../lib/api";
+import { api } from "../lib/api";
 import Nav from "../components/Nav";
 import { Send, Sparkles } from "lucide-react";
 import { toast, Toaster } from "sonner";
@@ -20,7 +20,7 @@ export default function Chat() {
   const [locked, setLocked] = useState(false);
   const scrollRef = useRef();
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       const { data } = await api.get(`/chat/${id}/messages`);
       setMessages(data.messages || []);
@@ -28,9 +28,9 @@ export default function Chat() {
     } catch (e) {
       toast.error("Unable to load chat");
     }
-  };
+  }, [id]);
 
-  useEffect(() => { fetchMessages(); /* eslint-disable-next-line */ }, [id]);
+  useEffect(() => { fetchMessages(); }, [fetchMessages]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -90,7 +90,7 @@ export default function Chat() {
                 </div>
               )}
               {messages.map((m, i) => (
-                <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div key={`${m.created_at}-${m.role}-${i}`} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[85%] rounded-2xl px-5 py-3 ${m.role === "user" ? "bg-[#D4AF37] text-black" : "bg-[#0A0A0A] border border-white/[0.06] text-white/90"}`}>
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.content}</p>
                   </div>

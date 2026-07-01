@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { api, API } from "../lib/api";
 import { track } from "../lib/analytics";
@@ -57,7 +57,7 @@ export default function Report() {
   const [loading, setLoading] = useState(true);
   const [unlocking, setUnlocking] = useState(false);
 
-  const fetchReport = async () => {
+  const fetchReport = useCallback(async () => {
     try {
       const { data } = await api.get(`/palm/reports/${id}`);
       setDoc(data);
@@ -67,9 +67,9 @@ export default function Report() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate]);
 
-  useEffect(() => { fetchReport(); /* eslint-disable-next-line */ }, [id]);
+  useEffect(() => { fetchReport(); }, [fetchReport]);
 
   const unlock = async (plan = "insight") => {
     setUnlocking(true);
