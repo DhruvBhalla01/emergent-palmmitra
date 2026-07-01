@@ -3,7 +3,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { api, API } from "../lib/api";
 import { track } from "../lib/analytics";
 import Nav from "../components/Nav";
-import { Lock, Download, Share2, Sparkles, Heart, Briefcase, Coins, Activity, Brain, Star, ShieldCheck, TrendingUp, Award, Zap, MessageCircle } from "lucide-react";
+import { Lock, Unlock, Download, Share2, Sparkles, Heart, Briefcase, Coins, Activity, Brain, Star, ShieldCheck, TrendingUp, Award, Zap, MessageCircle } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
 function ScoreRing({ score, size = 88, label }) {
@@ -177,7 +177,7 @@ export default function Report() {
               <span className="text-white/40">/ 100</span>
             </div>
             <p className="mt-6 text-white/70 leading-relaxed max-w-md">
-              {locked ? "Unlock your full report to see the story behind this number." : (r.summary || "")}
+              {locked ? (r.summary || "Two sections below are free — unlock the full report for the complete story.") : (r.summary || "")}
             </p>
           </div>
 
@@ -201,50 +201,71 @@ export default function Report() {
 
         {/* PAYWALL */}
         {locked ? (
-          <div className="relative mt-8">
-            {/* Blurred preview underneath */}
-            <div className="blur-paywall grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[Briefcase, Heart, Coins, Activity].map((I, idx) => (
-                <div key={idx} className="bg-[#0A0A0A] border border-white/[0.06] rounded-3xl p-10 h-64">
-                  <div className="w-40 h-4 bg-white/20 rounded mb-4" />
-                  <div className="w-full h-3 bg-white/10 rounded mb-2" />
-                  <div className="w-3/4 h-3 bg-white/10 rounded mb-2" />
-                  <div className="w-2/3 h-3 bg-white/10 rounded" />
-                </div>
-              ))}
+          <div className="mt-8" data-testid="free-preview">
+            {/* FREE sections */}
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-xs font-mono px-2.5 py-1 rounded-full inline-flex items-center gap-1" style={{ background: "rgba(16,185,129,0.12)", color: "#10B981" }}>
+                <Unlock className="w-3 h-3" /> 2 SECTIONS FREE
+              </span>
+              <p className="text-xs text-white/40">See real insight before you unlock everything</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Section icon={Brain} title="Personality" testId="section-personality">
+                <p className="text-white/80 leading-relaxed">{r.personality?.summary}</p>
+                <div className="mt-6"><Chips items={r.personality?.traits} gold /></div>
+              </Section>
+              <Section icon={Heart} title="Love" testId="section-love">
+                <p className="text-white/80 leading-relaxed">{r.love?.summary}</p>
+                <p className="mt-4 text-sm text-[#D4AF37]">{r.love?.love_style}</p>
+                <div className="mt-4"><Chips items={r.love?.compatibility} /></div>
+              </Section>
             </div>
 
-            {/* Paywall overlay */}
-            <div className="absolute inset-0 flex items-center justify-center px-4">
-              <div className="glass rounded-3xl p-10 sm:p-14 max-w-2xl text-center relative overflow-hidden" data-testid="paywall">
-                <div className="w-14 h-14 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/40 flex items-center justify-center mx-auto mb-6">
-                  <Lock className="w-5 h-5 text-[#D4AF37]" strokeWidth={1.5} />
-                </div>
-                <p className="text-xs uppercase tracking-[0.25em] text-[#D4AF37] mb-3">Premium Report</p>
-                <h2 className="hero-headline text-3xl sm:text-4xl">Your personalized AI report is ready.</h2>
-                <p className="mt-4 text-white/70 max-w-md mx-auto">
-                  Unlock your complete life analysis with over 40 personalized insights — career, love, wealth, health, timeline, and hidden strengths.
-                </p>
+            {/* Locked remainder + paywall overlay */}
+            <div className="relative mt-6">
+              <div className="blur-paywall grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[Briefcase, Coins, Activity, TrendingUp].map((I, idx) => (
+                  <div key={idx} className="bg-[#0A0A0A] border border-white/[0.06] rounded-3xl p-10 h-64">
+                    <I className="w-5 h-5 text-[#D4AF37] mb-4" />
+                    <div className="w-40 h-4 bg-white/20 rounded mb-4" />
+                    <div className="w-full h-3 bg-white/10 rounded mb-2" />
+                    <div className="w-3/4 h-3 bg-white/10 rounded mb-2" />
+                    <div className="w-2/3 h-3 bg-white/10 rounded" />
+                  </div>
+                ))}
+              </div>
 
-                <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                  {["40+ Insights", "Life Timeline", "Lucky Years", "Action Plan"].map((b) => (
-                    <div key={b} className="px-3 py-2 rounded-full border border-white/10 text-white/70">{b}</div>
-                  ))}
-                </div>
+              <div className="absolute inset-0 flex items-center justify-center px-4">
+                <div className="glass rounded-3xl p-10 sm:p-14 max-w-2xl text-center relative overflow-hidden" data-testid="paywall">
+                  <div className="w-14 h-14 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/40 flex items-center justify-center mx-auto mb-6">
+                    <Lock className="w-5 h-5 text-[#D4AF37]" strokeWidth={1.5} />
+                  </div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-[#D4AF37] mb-3">Unlock The Full Reading</p>
+                  <h2 className="hero-headline text-3xl sm:text-4xl">12 more sections are waiting.</h2>
+                  <p className="mt-4 text-white/70 max-w-md mx-auto">
+                    Career turning points, wealth windows, marriage timeline, health, life timeline, hidden talents, lucky years, and your personal action plan.
+                  </p>
 
-                <button
-                  onClick={() => unlock("insight")}
-                  disabled={unlocking}
-                  data-testid="unlock-report-btn"
-                  className="mt-10 w-full sm:w-auto inline-block bg-[#D4AF37] text-black font-medium rounded-full px-10 py-4 hover:bg-[#F5D061] transition-colors disabled:opacity-50"
-                >
-                  {unlocking ? "Processing..." : "Unlock Full Report — ₹299"}
-                </button>
+                  <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    {["Career & Wealth", "Life Timeline", "Lucky Years", "Action Plan"].map((b) => (
+                      <div key={b} className="px-3 py-2 rounded-full border border-white/10 text-white/70">{b}</div>
+                    ))}
+                  </div>
 
-                <div className="mt-6 flex items-center justify-center gap-6 text-xs text-white/40">
-                  <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> Secure payment</span>
-                  <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /> Instant access</span>
-                  <span className="flex items-center gap-1.5"><Star className="w-3.5 h-3.5" /> 7-day refund</span>
+                  <button
+                    onClick={() => unlock("insight")}
+                    disabled={unlocking}
+                    data-testid="unlock-report-btn"
+                    className="mt-10 w-full sm:w-auto inline-block bg-[#D4AF37] text-black font-medium rounded-full px-10 py-4 hover:bg-[#F5D061] transition-colors disabled:opacity-50"
+                  >
+                    {unlocking ? "Processing..." : "Unlock Full Report — ₹299"}
+                  </button>
+
+                  <div className="mt-6 flex items-center justify-center gap-6 text-xs text-white/40">
+                    <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> Secure payment</span>
+                    <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /> Instant access</span>
+                    <span className="flex items-center gap-1.5"><Star className="w-3.5 h-3.5" /> 7-day refund</span>
+                  </div>
                 </div>
               </div>
             </div>

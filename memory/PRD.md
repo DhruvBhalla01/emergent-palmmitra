@@ -39,13 +39,17 @@ Build PalmMitra from scratch — a premium AI Life Guidance Platform where palm 
 - **P2** Blog / SEO / SSR-ready pages
 - **P2** Apple sign-in
 
-## Landing Redesign (2026-07-01)
-- Rewrote `Landing.jsx` with luxury bento system per `design_guidelines.json`: asymmetric 12-col hero + glass stat bento, editorial ribbon marquee, tetris benefits grid, `grid-exposure` technical borders, framer-motion scroll reveals, tracing-beam (rotating conic-gradient) border on the "Plus" pricing tier, massive footer wordmark.
-- Accent: blended copper `#D97757` (primary) + gold `#E4B248` (micro-accents/stars) per user choice.
-- All existing `data-testid`s preserved. Verified via screenshots (hero/benefits/pricing render cleanly).
+## Phase 1 — Landing conversion redesign (2026-07-01)
+- Hybrid identity: dark-luxury copper base + subtle Shastra warmth (Sanskrit eyebrows in Cormorant gold, mandala watermark). Studied production palmmitra.in for structure.
+- Added: trust line, stat strip (12,400+/4.9★/2,000+/~2min), 3-step process w/ timing badges, five-truths features, SAMPLE REPORT reveal (FREE/PREMIUM tags), comparison table, testimonial stats header, countdown-urgency CTA + PALMFRIEND. Custom generated on-brand imagery.
+
+## Phase 2 — Free-preview model (2026-07-01)
+- Backend `GET /api/palm/reports/{id}`: when locked, returns 2 FULL sections (personality + love) + all category scores + overall summary; rest gated. Adds `free_sections`.
+- Report.jsx locked view: overall score + summary + score grid + 2 free sections ("2 SECTIONS FREE" green badge), then blurred remainder + "12 more sections are waiting" paywall (₹299).
+- Verified via API + browser screenshots.
 
 ## Next Tasks
-1. Razorpay webhook listener (`POST /api/payment/webhook`) — prevent lost revenue on early browser close
-2. Apply bento/tracing-beam styling to internal pages (Pricing, Upload scanner animation)
-3. Add real Razorpay keys → go live
-4. Refactor high-complexity backend fns + large React components (P2)
+1. **Phase 3 — PalmMatch** (two-palm compatibility, ₹4,999): `palmmatch_reports` collection, `POST /api/palmmatch/analyze` + `GET /api/palmmatch/{id}`, reprice `match` plan→₹4,999, frontend `/palmmatch` upload(A/B)→analyzing→result (compat ring + category bars + paywall), landing/nav entry.
+2. Optional polish: hero "40+"→"15+ markers"; refine Nav/Footer `P` mark to copper.
+3. Razorpay webhook listener; real Razorpay keys → go live.
+4. Refactor high-complexity backend fns + large React components (P2).

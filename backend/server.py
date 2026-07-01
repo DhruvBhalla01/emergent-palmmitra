@@ -447,20 +447,23 @@ async def get_report(report_id: str, user: User = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Report not found")
 
     if not doc.get("unlocked", False) and doc.get("report"):
-        # Return only preview scores when locked
+        # Free-preview model: 2 full sections free (personality + love), rest gated
         full = doc["report"]
         preview = {
             "overall_score": full.get("overall_score"),
             "headline": full.get("headline"),
-            "personality": {"score": full.get("personality", {}).get("score")},
+            "summary": full.get("summary"),
+            "personality": full.get("personality"),
+            "love": full.get("love"),
             "career": {"score": full.get("career", {}).get("score")},
             "money": {"score": full.get("money", {}).get("score")},
-            "love": {"score": full.get("love", {}).get("score")},
             "health": {"score": full.get("health", {}).get("score")},
+            "leadership": {"score": full.get("leadership", {}).get("score")},
             "strengths_preview": (full.get("strengths") or [])[:2],
         }
         doc["report"] = preview
         doc["locked"] = True
+        doc["free_sections"] = ["personality", "love"]
     else:
         doc["locked"] = False
     return doc
