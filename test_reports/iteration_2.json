@@ -1,0 +1,28 @@
+{
+  "summary": "Iteration 2 P1 features validated end-to-end. All 4 new features (PDF export, Referral, AI Chat, Subscription lifecycle) working on backend and frontend. Base regression flow (login, dashboard, report) still healthy.",
+  "tested_scope": ["backend", "frontend", "integration"],
+  "passed": [
+    "PDF: GET /api/palm/reports/rpt_efc49a2be09c/pdf → HTTP 200, content-type application/pdf, content-disposition attachment, body starts with %PDF-1.4",
+    "PDF UI: report-download-btn visible on unlocked report page",
+    "Referral: GET /api/referral/me → {code:'PM42E039', credits_inr:0, referred_count:0} (matches PM[6 hex] regex)",
+    "Referral: POST /api/referral/apply invalid code → 404, own code → 400",
+    "Referral UI: Dashboard shows referral-card with referral-code, copy-ref-btn, apply-ref-input, apply-ref-btn (all count=1)",
+    "Chat: GET /api/chat/rpt_efc49a2be09c/messages → {unlocked:true, messages:[...]}",
+    "Chat: POST /api/chat/rpt_efc49a2be09c/message → GPT-5.2 reply grounded in report (returned ~2s: 'You don’t need to be loud to win…')",
+    "Chat UI: /chat/:id page loads, chat-input + chat-send-btn present, user message and AI reply rendered in chat-messages",
+    "Subscription: Fresh user register → create-order(plan=plus,report_id=dummy) → verify → /subscription/status returns is_premium=true, plan=plus, status=active, current_period_end ~30d",
+    "Subscription: POST /subscription/cancel on active sub → status='canceled', canceled_at set; second cancel → HTTP 400 'No active subscription'",
+    "Subscription UI: subscription-card visible on Dashboard ('Not subscribed' state for demo user)",
+    "Regression: login via /auth works, dashboard loads, GET /api/palm/reports lists rpt_efc49a2be09c as unlocked"
+  ],
+  "failed": [],
+  "notes": [
+    "MOCKED: Razorpay in mock mode (RAZORPAY_KEY_ID empty) — /api/payment/verify auto-marks paid and triggers subscription activation. This is expected per problem statement.",
+    "Minor observation: /api/payment/create-order requires report_id in body (Pydantic 422 without it). Not a bug per spec but flow requires the caller to have a report_id; a dummy id still creates a valid order and activates subscription on /verify. Consider making report_id optional for pure-subscription flows in future.",
+    "Login route is /auth (not /login). Tested via /auth successfully."
+  ],
+  "action_items": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true
+}

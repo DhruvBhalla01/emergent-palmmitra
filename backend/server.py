@@ -20,6 +20,15 @@ import httpx
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
 
+from fastapi.responses import StreamingResponse
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import cm
+from reportlab.lib.colors import HexColor, black, white
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle
+from reportlab.pdfgen import canvas as rl_canvas
+import io
+
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -147,6 +156,7 @@ async def register(data: UserRegister):
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     user_id = f"user_{uuid.uuid4().hex[:12]}"
+    ref_code = f"PM{uuid.uuid4().hex[:6].upper()}"
     doc = {
         "user_id": user_id,
         "email": data.email,
@@ -154,6 +164,10 @@ async def register(data: UserRegister):
         "password_hash": hash_password(data.password),
         "auth_provider": "email",
         "is_premium": False,
+        "referral_code": ref_code,
+        "referral_credits_inr": 0,
+        "referred_by": None,
+        "subscription": None,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.users.insert_one(doc)
@@ -207,6 +221,10 @@ async def emergent_session(request: Request, response: Response):
             "picture": data.get("picture"),
             "auth_provider": "google",
             "is_premium": False,
+            "referral_code": f"PM{uuid.uuid4().hex[:6].upper()}",
+            "referral_credits_inr": 0,
+            "referred_by": None,
+            "subscription": None,
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         await db.users.insert_one(user.copy())
@@ -495,11 +513,279 @@ async def verify_payment(data: PaymentVerifyRequest, user: User = Depends(get_cu
         {"$set": {"unlocked": True}},
     )
 
-    # Update user premium status if plus/elite
-    if order["plan"] in ("plus", "elite"):
-        await db.users.update_one({"user_id": user.user_id}, {"$set": {"is_premium": True}})
+    # Subscription lifecycle
+    now = datetime.now(timezone.utc)
+    if order["plan"] == "plus":
+        sub = {
+            "plan": "plus",
+            "status": "active",
+            "started_at": now.isoformat(),
+            "current_period_end": (now + timedelta(days=30)).isoformat(),
+            "canceled_at": None,
+        }
+        await db.users.update_one({"user_id": user.user_id}, {"$set": {"is_premium": True, "subscription": sub}})
+    elif order["plan"] == "elite":
+        sub = {
+            "plan": "elite",
+            "status": "active",
+            "started_at": now.isoformat(),
+            "current_period_end": None,  # one-time lifetime
+            "canceled_at": None,
+        }
+        await db.users.update_one({"user_id": user.user_id}, {"$set": {"is_premium": True, "subscription": sub}})
+
+    # Referral credit for referrer on first paid order of the referred user
+    user_doc = await db.users.find_one({"user_id": user.user_id}, {"_id": 0})
+    if user_doc and user_doc.get("referred_by"):
+        prior_paid = await db.payment_orders.count_documents({"user_id": user.user_id, "status": "paid"})
+        if prior_paid <= 1:  # this order is the first paid one
+            await db.users.update_one(
+                {"user_id": user_doc["referred_by"]},
+                {"$inc": {"referral_credits_inr": 100}},
+            )
 
     return {"ok": True, "unlocked": True}
+
+
+# ====================== PDF EXPORT ======================
+
+def _build_pdf(report: Dict[str, Any], name: str, generated_on: str) -> bytes:
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=2.2*cm, rightMargin=2.2*cm, topMargin=2.5*cm, bottomMargin=2*cm)
+    styles = getSampleStyleSheet()
+    GOLD = HexColor("#D4AF37")
+
+    def _p(text, size=10, color=black, leading=None, space=6, bold=False):
+        style = ParagraphStyle(
+            f"p{size}{bold}",
+            fontName="Helvetica-Bold" if bold else "Helvetica",
+            fontSize=size,
+            leading=leading or size + 3,
+            textColor=color,
+            spaceAfter=space,
+        )
+        return Paragraph(text, style)
+
+    story = []
+
+    # COVER
+    def cover(canv, docx):
+        canv.saveState()
+        canv.setFillColor(HexColor("#000000"))
+        canv.rect(0, 0, A4[0], A4[1], fill=1, stroke=0)
+        canv.setFillColor(GOLD)
+        canv.setFont("Helvetica-Bold", 10)
+        canv.drawString(2.2*cm, A4[1] - 2*cm, "PALMMITRA")
+        canv.setFillColor(white)
+        canv.setFont("Helvetica-Bold", 36)
+        canv.drawString(2.2*cm, A4[1] - 8*cm, "Your AI Life")
+        canv.drawString(2.2*cm, A4[1] - 9.6*cm, "Guidance Report")
+        canv.setFillColor(GOLD)
+        canv.setFont("Helvetica", 12)
+        canv.drawString(2.2*cm, A4[1] - 11.5*cm, f"For {name}")
+        canv.setFillColor(HexColor("#888888"))
+        canv.setFont("Helvetica", 9)
+        canv.drawString(2.2*cm, 2*cm, f"Generated {generated_on}  ·  palmmitra.ai")
+        canv.setStrokeColor(GOLD)
+        canv.setLineWidth(0.6)
+        canv.line(2.2*cm, A4[1] - 12.5*cm, 8*cm, A4[1] - 12.5*cm)
+        canv.restoreState()
+
+    story.append(Spacer(1, 0.5*cm))
+    story.append(PageBreak())
+
+    # Content pages
+    story.append(_p("YOUR PALMMITRA REPORT", 8, GOLD, space=4, bold=True))
+    story.append(_p(report.get("headline", ""), 20, black, leading=24, space=16, bold=True))
+    story.append(_p(f"Overall Score: <b>{report.get('overall_score', '—')}/100</b>", 12, GOLD, space=18))
+    story.append(_p(report.get("summary", ""), 11, HexColor("#333333"), leading=16, space=20))
+
+    def _section(title, body):
+        story.append(_p(title.upper(), 8, GOLD, space=4, bold=True))
+        story.append(_p(body, 11, HexColor("#222222"), leading=15, space=14))
+
+    def _bullets(items):
+        for it in items or []:
+            story.append(_p(f"•  {it}", 10, HexColor("#333333"), leading=14, space=3))
+        story.append(Spacer(1, 8))
+
+    for key, label in [("personality", "Personality"), ("career", "Career"), ("money", "Wealth"),
+                        ("love", "Love"), ("marriage", "Marriage"), ("family", "Family"), ("health", "Health")]:
+        sec = report.get(key, {}) or {}
+        if sec.get("summary"):
+            score = sec.get("score")
+            title = f"{label}" + (f"  ·  {score}/100" if score is not None else "")
+            _section(title, sec["summary"])
+
+    story.append(_p("STRENGTHS", 8, GOLD, space=4, bold=True))
+    _bullets(report.get("strengths"))
+    story.append(_p("HIDDEN TALENTS", 8, GOLD, space=4, bold=True))
+    _bullets(report.get("hidden_talents"))
+    story.append(_p("OPPORTUNITIES", 8, GOLD, space=4, bold=True))
+    _bullets(report.get("opportunities"))
+    story.append(_p("LUCKY YEARS", 8, GOLD, space=4, bold=True))
+    story.append(_p("  ".join(str(y) for y in report.get("lucky_years") or []), 14, GOLD, space=14, bold=True))
+
+    # Timeline
+    story.append(_p("LIFE TIMELINE", 8, GOLD, space=4, bold=True))
+    for t in report.get("life_timeline") or []:
+        story.append(_p(f"<b>{t.get('age', '')}</b> — {t.get('theme', '')}: {t.get('detail', '')}", 10, HexColor("#333333"), leading=14, space=5))
+
+    story.append(Spacer(1, 10))
+    story.append(_p("RECOMMENDATIONS", 8, GOLD, space=4, bold=True))
+    _bullets(report.get("recommendations"))
+
+    story.append(_p("ACTION PLAN", 8, GOLD, space=4, bold=True))
+    for a in report.get("action_plan") or []:
+        story.append(_p(f"<b>{a.get('horizon', '')}:</b> {a.get('action', '')}", 10, HexColor("#333333"), leading=14, space=5))
+
+    story.append(Spacer(1, 20))
+    story.append(_p("© PalmMitra — AI Life Guidance. This report is generated by artificial intelligence and intended as guidance, not fate.",
+                    8, HexColor("#888888")))
+
+    doc.build(story, onFirstPage=cover, onLaterPages=lambda c, d: None)
+    return buf.getvalue()
+
+
+@api_router.get("/palm/reports/{report_id}/pdf")
+async def report_pdf(report_id: str, user: User = Depends(get_current_user)):
+    doc = await db.palm_reports.find_one({"report_id": report_id, "user_id": user.user_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Report not found")
+    if not doc.get("unlocked"):
+        raise HTTPException(status_code=402, detail="Unlock report to download PDF")
+
+    pdf_bytes = _build_pdf(doc["report"], doc.get("name") or user.name, doc.get("created_at", "")[:10])
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=palmmitra-{report_id}.pdf"},
+    )
+
+
+# ====================== AI CHAT ======================
+
+class ChatMessageRequest(BaseModel):
+    message: str
+
+
+@api_router.get("/chat/{report_id}/messages")
+async def list_chat(report_id: str, user: User = Depends(get_current_user)):
+    doc = await db.palm_reports.find_one({"report_id": report_id, "user_id": user.user_id}, {"_id": 0, "unlocked": 1})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Report not found")
+    msgs = await db.chat_messages.find(
+        {"report_id": report_id, "user_id": user.user_id}, {"_id": 0}
+    ).sort("created_at", 1).to_list(500)
+    return {"unlocked": doc.get("unlocked", False), "messages": msgs}
+
+
+@api_router.post("/chat/{report_id}/message")
+async def send_chat(report_id: str, data: ChatMessageRequest, user: User = Depends(get_current_user)):
+    report = await db.palm_reports.find_one({"report_id": report_id, "user_id": user.user_id}, {"_id": 0})
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    if not report.get("unlocked"):
+        raise HTTPException(status_code=402, detail="Unlock report to chat")
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.chat_messages.insert_one({
+        "report_id": report_id, "user_id": user.user_id,
+        "role": "user", "content": data.message, "created_at": now,
+    })
+
+    history = await db.chat_messages.find(
+        {"report_id": report_id, "user_id": user.user_id}, {"_id": 0}
+    ).sort("created_at", 1).to_list(50)
+
+    sys_msg = (
+        "You are PalmMitra, a warm and precise AI life guide. "
+        "You have exclusive access to this user's personalized palm-derived life report (JSON below). "
+        "Answer questions grounded in this report. Be modern, kind, direct. Never mystical. "
+        "Keep replies concise (2-6 sentences) unless asked for depth.\n\n"
+        f"USER REPORT:\n{json.dumps(report.get('report', {}))[:6000]}"
+    )
+    session_id = f"chat_{report_id}"
+    chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=session_id, system_message=sys_msg).with_model("openai", "gpt-5.2")
+
+    # Concatenate history as one user turn for simplicity (fresh session_id ensures no library-side state)
+    convo = "\n".join([f"{m['role'].upper()}: {m['content']}" for m in history[-12:]])
+    reply = await chat.send_message(UserMessage(text=f"Conversation so far:\n{convo}\n\nRespond as ASSISTANT to the latest USER message."))
+
+    await db.chat_messages.insert_one({
+        "report_id": report_id, "user_id": user.user_id,
+        "role": "assistant", "content": reply,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    return {"reply": reply}
+
+
+# ====================== REFERRALS ======================
+
+class ReferralApplyRequest(BaseModel):
+    code: str
+
+
+@api_router.get("/referral/me")
+async def my_referral(user: User = Depends(get_current_user)):
+    u = await db.users.find_one({"user_id": user.user_id}, {"_id": 0})
+    if not u.get("referral_code"):
+        code = f"PM{uuid.uuid4().hex[:6].upper()}"
+        await db.users.update_one({"user_id": user.user_id}, {"$set": {"referral_code": code}})
+        u["referral_code"] = code
+    count = await db.users.count_documents({"referred_by": user.user_id})
+    return {
+        "code": u["referral_code"],
+        "credits_inr": u.get("referral_credits_inr", 0),
+        "referred_count": count,
+    }
+
+
+@api_router.post("/referral/apply")
+async def apply_referral(data: ReferralApplyRequest, user: User = Depends(get_current_user)):
+    u = await db.users.find_one({"user_id": user.user_id}, {"_id": 0})
+    if u.get("referred_by"):
+        raise HTTPException(status_code=400, detail="Referral already applied")
+    if u.get("referral_code") == data.code.strip().upper():
+        raise HTTPException(status_code=400, detail="Cannot use your own code")
+    ref = await db.users.find_one({"referral_code": data.code.strip().upper()}, {"_id": 0})
+    if not ref:
+        raise HTTPException(status_code=404, detail="Invalid referral code")
+    await db.users.update_one({"user_id": user.user_id}, {"$set": {"referred_by": ref["user_id"]}})
+    return {"ok": True, "discount_inr": 100, "message": "₹100 discount will be applied at checkout"}
+
+
+# ====================== SUBSCRIPTION ======================
+
+@api_router.get("/subscription/status")
+async def subscription_status(user: User = Depends(get_current_user)):
+    u = await db.users.find_one({"user_id": user.user_id}, {"_id": 0})
+    sub = u.get("subscription")
+    if sub and sub.get("current_period_end"):
+        try:
+            end = datetime.fromisoformat(sub["current_period_end"])
+            if end.tzinfo is None:
+                end = end.replace(tzinfo=timezone.utc)
+            if end < datetime.now(timezone.utc) and sub.get("plan") == "plus":
+                sub["status"] = "expired"
+                await db.users.update_one({"user_id": user.user_id}, {"$set": {"subscription.status": "expired", "is_premium": False}})
+        except Exception:
+            pass
+    return {"is_premium": u.get("is_premium", False), "subscription": sub}
+
+
+@api_router.post("/subscription/cancel")
+async def cancel_subscription(user: User = Depends(get_current_user)):
+    u = await db.users.find_one({"user_id": user.user_id}, {"_id": 0})
+    sub = u.get("subscription")
+    if not sub or sub.get("status") != "active":
+        raise HTTPException(status_code=400, detail="No active subscription")
+    now = datetime.now(timezone.utc).isoformat()
+    await db.users.update_one(
+        {"user_id": user.user_id},
+        {"$set": {"subscription.status": "canceled", "subscription.canceled_at": now}},
+    )
+    return {"ok": True, "message": "Subscription canceled. Access continues until period end."}
 
 
 # ====================== HEALTH ======================

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { api } from "../lib/api";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { api, API } from "../lib/api";
 import Nav from "../components/Nav";
-import { Lock, Download, Share2, Sparkles, Heart, Briefcase, Coins, Activity, Brain, Star, ShieldCheck, TrendingUp, Award, Zap } from "lucide-react";
+import { Lock, Download, Share2, Sparkles, Heart, Briefcase, Coins, Activity, Brain, Star, ShieldCheck, TrendingUp, Award, Zap, MessageCircle } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
 function ScoreRing({ score, size = 88, label }) {
@@ -134,13 +134,34 @@ export default function Report() {
             <p className="mt-3 text-white/50 text-sm">Generated on {new Date(doc.created_at).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}</p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="text-sm text-white/60 hover:text-white flex items-center gap-2 border border-white/10 rounded-full px-4 py-2" data-testid="report-share-btn">
+            <button className="text-sm text-white/60 hover:text-white flex items-center gap-2 border border-white/10 rounded-full px-4 py-2" data-testid="report-share-btn" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied"); }}>
               <Share2 className="w-3.5 h-3.5" /> Share
             </button>
             {!locked && (
-              <button className="text-sm text-black bg-[#D4AF37] hover:bg-[#F5D061] rounded-full px-4 py-2 flex items-center gap-2" data-testid="report-download-btn">
-                <Download className="w-3.5 h-3.5" /> Download PDF
-              </button>
+              <>
+                <Link
+                  to={`/chat/${id}`}
+                  data-testid="report-chat-btn"
+                  className="text-sm text-white/80 hover:text-white flex items-center gap-2 border border-white/10 hover:border-[#D4AF37]/50 rounded-full px-4 py-2"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" /> Ask AI
+                </Link>
+                <button
+                  onClick={async () => {
+                    try {
+                      const resp = await api.get(`/palm/reports/${id}/pdf`, { responseType: "blob" });
+                      const url = URL.createObjectURL(resp.data);
+                      const a = document.createElement("a");
+                      a.href = url; a.download = `palmmitra-${id}.pdf`; a.click();
+                      URL.revokeObjectURL(url);
+                    } catch (e) { toast.error("Download failed"); }
+                  }}
+                  className="text-sm text-black bg-[#D4AF37] hover:bg-[#F5D061] rounded-full px-4 py-2 flex items-center gap-2"
+                  data-testid="report-download-btn"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download PDF
+                </button>
+              </>
             )}
           </div>
         </div>

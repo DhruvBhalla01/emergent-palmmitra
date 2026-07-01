@@ -9,6 +9,7 @@ import Upload from "./pages/Upload";
 import Analyzing from "./pages/Analyzing";
 import Report from "./pages/Report";
 import Dashboard from "./pages/Dashboard";
+import Chat from "./pages/Chat";
 import { AuthProvider } from "./lib/AuthContext";
 
 function AppRouter() {
@@ -25,6 +26,7 @@ function AppRouter() {
       <Route path="/upload" element={<Upload />} />
       <Route path="/analyzing" element={<Analyzing />} />
       <Route path="/report/:id" element={<Report />} />
+      <Route path="/chat/:id" element={<Chat />} />
       <Route path="/dashboard" element={<Dashboard />} />
     </Routes>
   );
