@@ -1,0 +1,39 @@
+{
+  "summary": "MVP smoke test on PalmMitra: All backend auth, payment (mock), report listing/retrieval, and frontend Landing/Auth/Upload flows work. CRITICAL BLOCKER: POST /api/palm/analyze returns 500 because EMERGENT_LLM_KEY has hit budget limit (litellm.BadRequestError: 'Budget has been exceeded! Current cost: 0.0, Max budget: 0.0'). This prevents any successful palm analysis and downstream full-report unlock verification.",
+  "tested_scope": ["frontend", "backend", "auth", "integration"],
+  "passed": [
+    "GET /api/ -> 200 {service:PalmMitra API,status:ok}",
+    "POST /api/auth/register -> 200 with token+user for new email; returns 400 'Email already registered' for existing email (expected)",
+    "POST /api/auth/login (demo@palmmitra.com/demo1234) -> 200 with JWT token; wrong password -> 401 'Invalid credentials'",
+    "GET /api/auth/me with Bearer -> 200 returns current user (user_22812a57b617)",
+    "GET /api/payment/plans -> 200 returns all 4 tiers (insight, match, plus, elite) with amount_inr/usd/name",
+    "GET /api/palm/reports -> 200 returns list of user's reports",
+    "GET /api/palm/reports/{id} -> 200; unlocked=false before payment",
+    "POST /api/payment/create-order plan=insight -> 200 with order_id, amount=29900, mock=true, razorpay_key=null (as expected with empty Razorpay keys)",
+    "POST /api/payment/verify -> 200 {ok:true, unlocked:true}; subsequent GET report shows unlocked=true",
+    "Frontend Landing (/) loads with hero copy 'Discover what your palm reveals about your future.' and testids hero-analyze-btn, hero-sample-btn visible",
+    "Frontend /auth loads with testids google-signin-btn, auth-email-input, auth-password-input, auth-submit-btn, auth-mode-toggle; toggling changes submit text from 'Sign in' to 'Create account'",
+    "Frontend /upload loads with left-palm-dropzone, right-palm-dropzone, and upload-analyze-btn is DISABLED until an image is uploaded (as required)"
+  ],
+  "failed": [
+    {
+      "area": "backend/LLM integration",
+      "issue": "POST /api/palm/analyze returns HTTP 500: 'AI analysis failed: Failed to generate chat completion: litellm.BadRequestError: OpenAIException - Budget has been exceeded! Current cost: 0.0, Max budget: 0.0'. The EMERGENT_LLM_KEY (sk-emergent-b1eA186F890A7Ee4e1) has zero budget available. Because analysis fails, we cannot verify: (a) initial locked=true + preview-only response, (b) full report JSON with the 14 required sections after unlock. The saved report has status='failed' and no analysis_data.",
+      "evidence": "curl POST /api/palm/analyze with real palm JPEG (44KB from pexels, base64 data URI) -> HTTP 500. Report record persisted as rpt_b7b948e9eff4 status=failed.",
+      "priority": "HIGH"
+    },
+    {
+      "area": "backend/report locking semantics",
+      "issue": "When report status='failed', GET /api/palm/reports/{id} returns locked=false even without payment. Likely because the code only sets locked=true when analysis_data exists. Not a blocker for MVP but worth flagging.",
+      "evidence": "GET /api/palm/reports/rpt_b7b948e9eff4 (pre-payment) -> unlocked=false, locked=false, status=failed",
+      "priority": "LOW"
+    }
+  ],
+  "action_items": [
+    "Top up / rotate EMERGENT_LLM_KEY so /api/palm/analyze can call GPT-5.2 successfully. Retest the full flow: analyze -> locked+preview -> pay (mock) -> unlocked+full report with all 14 sections (personality, career, money, love, marriage, family, health, strengths, weaknesses, lucky_years, life_timeline, recommendations, action_plan, summary).",
+    "Optional: consider setting locked=true when status='failed' OR surface the error UI-side so users don't see an empty unlocked-but-broken report."
+  ],
+  "success_rate": {"backend": "89% (8/9 core endpoints; palm/analyze blocked by external LLM budget)", "frontend": "100% (Landing, Auth, Upload smoke checks all pass)"},
+  "retest_needed": true,
+  "full_testing_deferred": true
+}
