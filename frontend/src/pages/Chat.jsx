@@ -15,19 +15,27 @@ const SUGGESTIONS = [
   "What are my biggest blind spots?",
 ];
 
-function Typewriter({ text }) {
-  const [shown, setShown] = useState("");
-  useEffect(() => {
-    let i = 0;
-    const step = Math.max(1, Math.round(text.length / 90));
-    const id = setInterval(() => {
-      i += step;
-      setShown(text.slice(0, i));
-      if (i >= text.length) clearInterval(id);
-    }, 16);
-    return () => clearInterval(id);
-  }, [text]);
-  return <p className="text-sm leading-relaxed whitespace-pre-wrap">{shown}</p>;
+function FormattedText({ text }) {
+  const fmt = (s) => s.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**")
+      ? <strong key={i} className="font-semibold text-white">{part.slice(2, -2)}</strong>
+      : <React.Fragment key={i}>{part}</React.Fragment>
+  );
+  const lines = (text || "").split("\n").filter((l) => l.trim() !== "");
+  return (
+    <div className="text-sm leading-relaxed space-y-1.5">
+      {lines.map((ln, i) => {
+        const t = ln.trim();
+        const bullet = /^[-*•]\s+/.test(t);
+        return (
+          <p key={i} className={bullet ? "flex gap-2" : ""}>
+            {bullet && <span style={{ color: COPPER }}>•</span>}
+            <span>{fmt(bullet ? t.replace(/^[-*•]\s+/, "") : t)}</span>
+          </p>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function Chat() {
@@ -185,7 +193,7 @@ export default function Chat() {
               {messages.map((m, i) => (
                 <div key={`${m.created_at}-${m.role}-${i}`} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[85%] rounded-2xl px-5 py-3 ${m.role === "user" ? "text-black" : "border border-white/[0.06] text-white/90"}`} style={m.role === "user" ? { background: COPPER } : { background: "#0A0A0A" }}>
-                    {m.role === "assistant" && m._new ? <Typewriter text={m.content} /> : <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.content}</p>}
+                    {m.role === "assistant" ? <FormattedText text={m.content} /> : <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.content}</p>}
                   </div>
                 </div>
               ))}

@@ -65,34 +65,7 @@ const Section = ({ id, children, className = "" }) => (
 );
 
 function Countdown() {
-  const [t, setT] = React.useState({ h: 0, m: 0, s: 0 });
-  React.useEffect(() => {
-    const tick = () => {
-      const now = new Date();
-      const end = new Date(now);
-      end.setHours(24, 0, 0, 0);
-      const diff = Math.max(0, end - now);
-      setT({
-        h: Math.floor(diff / 3.6e6),
-        m: Math.floor((diff % 3.6e6) / 6e4),
-        s: Math.floor((diff % 6e4) / 1000),
-      });
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-  const pad = (n) => String(n).padStart(2, "0");
-  return (
-    <div className="flex items-center justify-center gap-3 font-mono" data-testid="countdown-timer">
-      {[["HRS", t.h], ["MIN", t.m], ["SEC", t.s]].map(([l, v]) => (
-        <div key={l} className="flex flex-col items-center">
-          <span className="text-3xl md:text-4xl" style={{ color: GOLD }}>{pad(v)}</span>
-          <span className="text-[0.6rem] tracking-[0.2em]" style={{ color: "#71717A" }}>{l}</span>
-        </div>
-      ))}
-    </div>
-  );
+  return null;
 }
 
 const compareRows = [
@@ -245,9 +218,9 @@ export default function Landing() {
                 </div>
                 <div className="relative">
                   <Fingerprint className="w-6 h-6 mb-6" style={{ color: COPPER }} strokeWidth={1.3} />
-                  <p className="overline">Signals decoded</p>
+                  <p className="overline">Palm markers read</p>
                   <div className="mt-3 flex items-baseline gap-2">
-                    <span className="hero-headline text-6xl" style={{ color: "#F4F4F5" }}>40+</span>
+                    <span className="hero-headline text-6xl" style={{ color: "#F4F4F5" }}>15+</span>
                   </div>
                   <div className="divider-gold my-6" />
                   <div className="font-mono text-xs space-y-2" style={{ color: "#A1A1AA" }}>
@@ -546,45 +519,49 @@ export default function Landing() {
 
         <Reveal delay={0.1}>
           <div className="mt-14 overflow-x-auto" data-testid="comparison-table">
-            <div className="min-w-[640px] grid grid-cols-4 rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="min-w-[640px] rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
               {/* header row */}
-              <div className="p-6" style={{ background: "rgba(255,255,255,0.015)" }}>
-                <p className="text-sm" style={{ color: "#71717A" }}>Compare</p>
-              </div>
-              {[
-                { t: "Horoscope App", s: "Generic · birth-date", hi: false },
-                { t: "PalmMitra AI", s: "YOUR palm · YOUR destiny", hi: true },
-                { t: "Manual Palmist", s: "Offline · subjective", hi: false },
-              ].map((c) => (
-                <div key={c.t} className="p-6 text-center relative" style={{ background: c.hi ? "rgba(217,119,87,0.08)" : "rgba(255,255,255,0.015)" }}>
-                  {c.hi && <span className="absolute top-2 left-1/2 -translate-x-1/2 font-mono text-[0.55rem] px-2 py-0.5 rounded-full" style={{ background: COPPER, color: "#000" }}>BEST CHOICE</span>}
-                  <p className="hero-headline text-lg mt-2" style={{ color: c.hi ? COPPER : "#F4F4F5" }}>{c.t}</p>
-                  <p className="text-xs mt-1" style={{ color: "#71717A" }}>{c.s}</p>
+              <div className="grid grid-cols-4">
+                <div className="p-6" style={{ background: "rgba(255,255,255,0.015)" }}>
+                  <p className="text-sm" style={{ color: "#71717A" }}>Compare</p>
                 </div>
-              ))}
+                {[
+                  { t: "Horoscope App", s: "Generic · birth-date", hi: false },
+                  { t: "PalmMitra AI", s: "YOUR palm · YOUR destiny", hi: true },
+                  { t: "Manual Palmist", s: "Offline · subjective", hi: false },
+                ].map((c) => (
+                  <div key={c.t} className="p-6 text-center relative" style={{ background: c.hi ? "rgba(217,119,87,0.08)" : "rgba(255,255,255,0.015)" }}>
+                    {c.hi && <span className="absolute top-2 left-1/2 -translate-x-1/2 font-mono text-[0.55rem] px-2 py-0.5 rounded-full whitespace-nowrap" style={{ background: COPPER, color: "#000" }}>BEST CHOICE</span>}
+                    <p className="hero-headline text-lg mt-2" style={{ color: c.hi ? COPPER : "#F4F4F5" }}>{c.t}</p>
+                    <p className="text-xs mt-1" style={{ color: "#71717A" }}>{c.s}</p>
+                  </div>
+                ))}
+              </div>
               {/* feature rows */}
               {compareRows.map((row, ri) => (
-                <React.Fragment key={row}>
-                  <div className="p-5 text-sm flex items-center" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", color: "#A1A1AA" }}>{row}</div>
+                <div key={row} className="grid grid-cols-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div className="p-5 text-sm flex items-center" style={{ color: "#A1A1AA" }}>{row}</div>
                   {[false, true, ri < 4].map((val, ci) => (
-                    <div key={ci} className="p-5 flex items-center justify-center" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: ci === 1 ? "rgba(217,119,87,0.05)" : "transparent" }}>
+                    <div key={ci} className="p-5 flex items-center justify-center" style={{ background: ci === 1 ? "rgba(217,119,87,0.05)" : "transparent" }}>
                       {val ? <Check className="w-5 h-5" style={{ color: ci === 1 ? COPPER : "#10B981" }} /> : <X className="w-5 h-5" style={{ color: "#3f3f46" }} />}
                     </div>
                   ))}
-                </React.Fragment>
-              ))}
-              {/* price row */}
-              <div className="p-5 text-sm flex items-center" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", color: "#F4F4F5" }}>Price</div>
-              {[
-                { p: "Free", s: "generic" },
-                { p: "₹299", s: "free preview" },
-                { p: "₹500–5,000", s: "per session" },
-              ].map((c, ci) => (
-                <div key={ci} className="p-5 text-center" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: ci === 1 ? "rgba(217,119,87,0.05)" : "transparent" }}>
-                  <p className="hero-headline text-xl" style={{ color: ci === 1 ? COPPER : "#F4F4F5" }}>{c.p}</p>
-                  <p className="text-xs" style={{ color: "#71717A" }}>{c.s}</p>
                 </div>
               ))}
+              {/* price row */}
+              <div className="grid grid-cols-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="p-5 text-sm flex items-center" style={{ color: "#F4F4F5" }}>Price</div>
+                {[
+                  { p: "Free", s: "generic" },
+                  { p: "₹299", s: "free preview" },
+                  { p: "₹500–5,000", s: "per session" },
+                ].map((c, ci) => (
+                  <div key={ci} className="p-5 text-center" style={{ background: ci === 1 ? "rgba(217,119,87,0.05)" : "transparent" }}>
+                    <p className="hero-headline text-xl" style={{ color: ci === 1 ? COPPER : "#F4F4F5" }}>{c.p}</p>
+                    <p className="text-xs" style={{ color: "#71717A" }}>{c.s}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </Reveal>
@@ -711,8 +688,7 @@ export default function Landing() {
             <div className="relative">
               <span className="font-serif text-xl" style={{ color: GOLD }}>ॐ Kaal Chakra</span>
               <h2 className="hero-headline text-4xl md:text-6xl mt-4">Your destiny won't wait.<br />Neither should you.</h2>
-              <p className="mt-4 text-sm font-mono" style={{ color: "#A1A1AA" }}>₹50 launch offer expires in — use code <span style={{ color: GOLD }}>PALMFRIEND</span></p>
-              <div className="mt-6"><Countdown /></div>
+              <p className="mt-5 text-base font-light max-w-md mx-auto" style={{ color: "#A1A1AA" }}>Begin with a free preview in under two minutes. No card needed to start.</p>
               <Link
                 to="/upload"
                 data-testid="cta-final-btn"
