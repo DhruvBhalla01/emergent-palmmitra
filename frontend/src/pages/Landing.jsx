@@ -7,6 +7,7 @@ import { track } from "../lib/analytics";
 import {
   Sparkles, Brain, Heart, Briefcase, Coins, Activity,
   ShieldCheck, Zap, TrendingUp, Star, ArrowUpRight, Fingerprint,
+  Check, X, Clock, Lock, Unlock,
 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../components/ui/accordion";
 
@@ -17,19 +18,20 @@ const HERO_BG = "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58
 const SMOKE = "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/2dda7208bd695171871b5c5897885d5b603a43495963c69940f5de315e8de80a.png";
 const AI_SPHERE = "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/d29c00fa518a0cfb066d44b99599aeaee18583d5978225155b720cd1f00d19d5.png";
 const REPORT_MOCKUP = "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/015fb14b2549d8f223fcbbeb1cdd335896704a39fe7c0b4ccb171930a924718f.png";
+const MANDALA = "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/a360bd52358a34f288ee1793ba7766a06b4ce2cafc13a3aa92f0e24941218f83.png";
 
 const testimonials = [
-  { name: "Ananya Rao", role: "Founder, Verve Studio", quote: "It felt like a private consultation with someone who truly understood me. The clarity was unreal.", img: "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/a2201cf2e1429c43781d36cec2cfcb35aa6d531d4d9b003f1abb47814d08e09f.png" },
-  { name: "Kabir Malhotra", role: "Product Lead, Nexo", quote: "The recommendations for the next quarter were spot-on. I referred five friends the same week.", img: "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/f7093c34306c5dc067c51f154a472f24b09d7786911a4b6ceba8787f2c78ca03.png" },
-  { name: "Isha Kapoor", role: "Investor", quote: "PalmMitra is what happens when AI meets craft. This is what luxury software should feel like.", img: "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/39365bf8953cacd3fee50507d7705c33f44e6ab99a8322ab292b6242aee45f06.png" },
+  { name: "Ananya Rao", role: "Founder · Verve Studio", quote: "It felt like a private consultation with someone who truly understood me. The clarity around my career pivot window was unreal.", img: "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/a2201cf2e1429c43781d36cec2cfcb35aa6d531d4d9b003f1abb47814d08e09f.png" },
+  { name: "Kabir Malhotra", role: "Product Lead · Nexo", quote: "The recommendations for the next quarter were spot-on. I referred five friends the same week — best money I've spent this year.", img: "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/f7093c34306c5dc067c51f154a472f24b09d7786911a4b6ceba8787f2c78ca03.png" },
+  { name: "Isha Kapoor", role: "Investor · Mumbai", quote: "I'm a skeptic by profession. The wealth-window analysis was specific enough to change how I think about the next three years.", img: "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/39365bf8953cacd3fee50507d7705c33f44e6ab99a8322ab292b6242aee45f06.png" },
 ];
 
 const faqs = [
-  { q: "Is PalmMitra actually scientific?", a: "PalmMitra combines computer vision with large language models to synthesize your personality, decision profile, and life patterns. It is a modern guidance tool — insightful, not fortune-telling." },
-  { q: "How long does the analysis take?", a: "Under a minute. Our AI reads over 40 signals from your palm images and generates a personalized report in real time." },
-  { q: "Is my data private?", a: "Absolutely. Your images are processed securely and never sold or shared. You may delete your data at any time." },
-  { q: "Can I get a refund?", a: "Yes. If you are not delighted with your report, request a full refund within 7 days. No questions asked." },
-  { q: "What makes this different from horoscopes?", a: "Everything. There are no zodiac signs, no rituals, no mystical language. Just precise, actionable insight grounded in AI analysis of you." },
+  { q: "Is this scientifically accurate or just entertainment?", a: "PalmMitra combines computer vision with large language models trained on classical Hasta Samudrika Shastra texts. It reads over 40 signals from your palm to synthesize a modern life profile — insightful and specific, never generic fortune-telling." },
+  { q: "How is this different from free horoscope apps?", a: "Everything. There are no zodiac signs or birth-date predictions. Every insight is decoded from the lines, mounts and patterns unique to YOUR hand — like a fingerprint of your future." },
+  { q: "How long does the analysis take?", a: "Under two minutes. Our AI reads 15+ palm markers and generates a personalized 2,000-word report in real time." },
+  { q: "What happens to my palm image?", a: "Your images are processed securely, never sold or shared, and you may delete them at any time. 256-bit SSL, Razorpay-secured." },
+  { q: "Can I access my report later?", a: "Yes. Every report is permanently saved at your private link and downloadable as a premium PDF whenever you want." },
 ];
 
 const ease = [0.16, 1, 0.3, 1];
@@ -46,16 +48,59 @@ const Reveal = ({ children, delay = 0, className = "" }) => (
   </motion.div>
 );
 
-const Overline = ({ children }) => (
-  <span className="overline inline-flex items-center gap-2">
-    <span className="w-6 h-px" style={{ background: COPPER }} />
-    {children}
-  </span>
+const Eyebrow = ({ sanskrit, children }) => (
+  <div className="flex items-center gap-3 flex-wrap">
+    {sanskrit && <span className="font-serif text-lg md:text-xl" style={{ color: GOLD }}>{sanskrit}</span>}
+    <span className="overline inline-flex items-center gap-2">
+      <span className="w-6 h-px" style={{ background: COPPER }} />
+      {children}
+    </span>
+  </div>
 );
 
 const Section = ({ id, children, className = "" }) => (
   <section id={id} className={`relative max-w-7xl mx-auto px-6 md:px-12 py-24 md:py-32 ${className}`}>{children}</section>
 );
+
+function Countdown() {
+  const [t, setT] = React.useState({ h: 0, m: 0, s: 0 });
+  React.useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      const end = new Date(now);
+      end.setHours(24, 0, 0, 0);
+      const diff = Math.max(0, end - now);
+      setT({
+        h: Math.floor(diff / 3.6e6),
+        m: Math.floor((diff % 3.6e6) / 6e4),
+        s: Math.floor((diff % 6e4) / 1000),
+      });
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  const pad = (n) => String(n).padStart(2, "0");
+  return (
+    <div className="flex items-center justify-center gap-3 font-mono" data-testid="countdown-timer">
+      {[["HRS", t.h], ["MIN", t.m], ["SEC", t.s]].map(([l, v]) => (
+        <div key={l} className="flex flex-col items-center">
+          <span className="text-3xl md:text-4xl" style={{ color: GOLD }}>{pad(v)}</span>
+          <span className="text-[0.6rem] tracking-[0.2em]" style={{ color: "#71717A" }}>{l}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const compareRows = [
+  "Personalised to YOUR palm",
+  "Specific years & dates revealed",
+  "Career + love + wealth in one report",
+  "Grounded in ancient Indian Shastra",
+  "Downloadable premium PDF",
+  "AI computer-vision analysis",
+];
 
 export default function Landing() {
   React.useEffect(() => { track("landing_view"); }, []);
@@ -65,31 +110,42 @@ export default function Landing() {
       <div className="aura-bg" />
       <Nav />
 
-      {/* ===================== HERO — asymmetric bento ===================== */}
+      {/* ===================== HERO ===================== */}
       <section className="relative">
         <div className="absolute inset-0 pointer-events-none">
           <img src={HERO_BG} alt="" className="w-full h-full object-cover opacity-[0.32]" />
           <div className="absolute inset-0" style={{ background: "radial-gradient(120% 90% at 20% 0%, rgba(5,5,5,0.35) 0%, rgba(5,5,5,0.85) 55%, #050505 80%)" }} />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-6 md:px-12 pt-20 pb-24 md:pt-28 md:pb-36">
+        <div className="relative max-w-7xl mx-auto px-6 md:px-12 pt-16 pb-20 md:pt-24 md:pb-32">
+          {/* mini trust line */}
+          <motion.div
+            className="flex items-center gap-2 text-xs font-mono mb-8"
+            style={{ color: "#A1A1AA" }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, ease }}
+          >
+            <span style={{ color: GOLD }}>12,400+ readings</span>
+            <span className="opacity-40">·</span>
+            <span className="flex items-center gap-1">4.9<Star className="w-3 h-3 fill-current" style={{ color: GOLD }} /> avg</span>
+          </motion.div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
-            {/* Left — editorial headline */}
             <div className="lg:col-span-8">
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease }}>
-                <div className="mb-8"><Overline>VERSION 5.2 &nbsp;/&nbsp; VISION AI</Overline></div>
+                <span className="font-serif text-xl md:text-2xl" style={{ color: GOLD }}>ॐ Bhavishya Darshan</span>
+                <span className="overline ml-3">VISION AI · v5.2</span>
               </motion.div>
 
               <motion.h1
-                className="hero-headline text-5xl md:text-7xl lg:text-[5.5rem]"
+                className="hero-headline text-5xl md:text-7xl lg:text-[5.5rem] mt-6"
                 data-testid="hero-headline"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, ease, delay: 0.08 }}
               >
-                Discover what your palm<br />
-                reveals about{" "}
-                <span className="font-serif not-italic" style={{ color: COPPER, fontStyle: "italic" }}>your future.</span>
+                Your palm holds a<br />
+                <span className="font-serif not-italic" style={{ color: COPPER, fontStyle: "italic" }}>2,000-word story</span><br />
+                about your life.
               </motion.h1>
 
               <motion.p
@@ -97,8 +153,8 @@ export default function Landing() {
                 style={{ color: "#A1A1AA" }}
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease, delay: 0.2 }}
               >
-                AI-powered analysis delivering deep insight into your personality, career, relationships,
-                finances, health, and life path — in under a minute.
+                Upload one photo — get a personalised report decoding your career turning points,
+                love timeline, wealth windows, health and life path in under two minutes.
               </motion.p>
 
               <motion.div
@@ -110,11 +166,8 @@ export default function Landing() {
                   data-testid="hero-analyze-btn"
                   className="group inline-flex items-center gap-2 rounded-full px-8 py-4 font-medium text-black transition-all duration-300 ease-out hover:-translate-y-0.5"
                   style={{ background: COPPER, boxShadow: "0 8px 40px rgba(217,119,87,0.35)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "#E88D70")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = COPPER)}
                 >
-                  Analyze My Palm
-                  <span className="text-sm opacity-70">— starts at ₹299</span>
+                  Scan My Palm — Free
                   <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </Link>
                 <a
@@ -123,30 +176,23 @@ export default function Landing() {
                   className="rounded-full px-8 py-4 border transition-all duration-300 hover:-translate-y-0.5"
                   style={{ borderColor: "rgba(255,255,255,0.15)", color: "#F4F4F5" }}
                 >
-                  View Sample Report
+                  See Sample Report
                 </a>
               </motion.div>
 
               <motion.div
-                className="mt-14 flex items-center gap-5 text-sm"
+                className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-mono"
                 style={{ color: "#71717A" }}
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, ease, delay: 0.5 }}
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, ease, delay: 0.45 }}
               >
-                <div className="flex -space-x-2">
-                  {testimonials.map((t) => (
-                    <img key={t.name} src={t.img} alt="" className="w-8 h-8 rounded-full object-cover border-2" style={{ borderColor: "#050505" }} />
-                  ))}
-                </div>
-                <div>
-                  <div className="flex items-center gap-1" style={{ color: GOLD }}>
-                    {[1, 2, 3, 4, 5].map((i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
-                  </div>
-                  <p className="mt-1">Loved by 42,000+ readers worldwide</p>
-                </div>
+                <span>Results in 2 min</span><span className="opacity-40">·</span>
+                <span>100% private</span><span className="opacity-40">·</span>
+                <span>Free preview</span><span className="opacity-40">·</span>
+                <span>Full report ₹299</span>
               </motion.div>
             </div>
 
-            {/* Right — glass stat bento */}
+            {/* Glass stat bento */}
             <motion.div
               className="lg:col-span-4 relative"
               initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.1, ease, delay: 0.35 }}
@@ -163,9 +209,9 @@ export default function Landing() {
                   </div>
                   <div className="divider-gold my-6" />
                   <div className="font-mono text-xs space-y-2" style={{ color: "#A1A1AA" }}>
-                    <div className="flex justify-between"><span>personality.index</span><span style={{ color: GOLD }}>0.91</span></div>
-                    <div className="flex justify-between"><span>career.trajectory</span><span style={{ color: GOLD }}>rising</span></div>
-                    <div className="flex justify-between"><span>risk.appetite</span><span style={{ color: GOLD }}>balanced</span></div>
+                    <div className="flex justify-between"><span>career.pivot</span><span style={{ color: GOLD }}>age 28–31</span></div>
+                    <div className="flex justify-between"><span>wealth.window</span><span style={{ color: GOLD }}>2026–2028</span></div>
+                    <div className="flex justify-between"><span>love.timeline</span><span style={{ color: GOLD }}>mapped</span></div>
                   </div>
                 </div>
               </div>
@@ -174,12 +220,31 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ===================== EDITORIAL RIBBON MARQUEE ===================== */}
-      <div className="relative border-y overflow-hidden py-5" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+      {/* ===================== TRUST / STAT STRIP ===================== */}
+      <div className="relative border-y" style={{ borderColor: "rgba(255,255,255,0.08)" }} data-testid="stat-strip">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 py-10 grid grid-cols-2 md:grid-cols-4 gap-8">
+          {[
+            { v: "12,400+", l: "Readings delivered" },
+            { v: "4.9★", l: "From 2,100+ reviews" },
+            { v: "2,000+", l: "Words per report" },
+            { v: "~2 min", l: "Full analysis time" },
+          ].map((s, i) => (
+            <Reveal key={s.l} delay={i * 0.06}>
+              <div className="text-center md:text-left">
+                <p className="hero-headline text-3xl md:text-4xl" style={{ color: "#F4F4F5" }}>{s.v}</p>
+                <p className="text-sm mt-1" style={{ color: "#71717A" }}>{s.l}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+
+      {/* ===================== EDITORIAL MARQUEE ===================== */}
+      <div className="relative overflow-hidden py-5" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <div className="marquee flex whitespace-nowrap">
           {[0, 1].map((dup) => (
             <div key={dup} className="flex items-center shrink-0">
-              {["Personality", "Career Path", "Wealth Potential", "Love & Marriage", "Health Signals", "Hidden Talents", "Lucky Years", "Decision Style"].map((w) => (
+              {["Career Path", "Wealth Windows", "Love & Marriage", "Health Signals", "Hidden Talents", "Lucky Years", "Life Timeline", "Spiritual Remedies"].map((w) => (
                 <span key={w} className="flex items-center">
                   <span className="font-serif text-2xl md:text-3xl px-8" style={{ color: "#A1A1AA" }}>{w}</span>
                   <span className="w-1 h-1 rounded-full" style={{ background: COPPER }} />
@@ -190,69 +255,27 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* ===================== BENEFITS — TETRIS BENTO ===================== */}
-      <Section id="benefits">
-        <Reveal><Overline>WHY PALMMITRA</Overline></Reveal>
-        <Reveal delay={0.05}>
-          <h2 className="hero-headline text-4xl md:text-5xl mt-4 max-w-3xl">A private analyst,<br />in your pocket.</h2>
-        </Reveal>
-
-        <div className="mt-14 grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Big feature cell */}
-          <Reveal className="md:col-span-7">
-            <div className="grid-exposure rounded-2xl p-10 h-full flex flex-col justify-between relative overflow-hidden">
-              <div className="absolute inset-0 opacity-[0.06] pointer-events-none">
-                <img src={SMOKE} alt="" className="w-full h-full object-cover" />
-              </div>
-              <div className="relative">
-                <Brain className="w-7 h-7 mb-6" style={{ color: COPPER }} strokeWidth={1.3} />
-                <h3 className="hero-headline text-3xl md:text-4xl">40+ personalized insights</h3>
-                <p className="mt-4 max-w-md font-light leading-relaxed" style={{ color: "#A1A1AA" }}>
-                  From decision style to hidden talents — the depth of a full personality workup, synthesized into a report you'll actually revisit.
-                </p>
-              </div>
-              <div className="relative mt-10 font-mono text-xs flex flex-wrap gap-2" style={{ color: "#71717A" }}>
-                {["career", "love", "wealth", "health", "timeline", "risk"].map((t) => (
-                  <span key={t} className="px-3 py-1 rounded-full border" style={{ borderColor: "rgba(255,255,255,0.1)" }}>{t}</span>
-                ))}
-              </div>
-            </div>
-          </Reveal>
-
-          {/* Stacked cells */}
-          <div className="md:col-span-5 grid grid-cols-1 gap-6">
-            {[
-              { icon: ShieldCheck, title: "Private by default", body: "Your images are analyzed and never shared. Delete anytime." },
-              { icon: Zap, title: "Ready in under a minute", body: "State-of-the-art vision models decode your palm the instant you upload." },
-            ].map(({ icon: Icon, title, body }, i) => (
-              <Reveal key={title} delay={0.08 * (i + 1)}>
-                <div className="grid-exposure rounded-2xl p-8 h-full">
-                  <Icon className="w-6 h-6 mb-5" style={{ color: COPPER }} strokeWidth={1.3} />
-                  <h3 className="hero-headline text-2xl">{title}</h3>
-                  <p className="mt-3 font-light leading-relaxed" style={{ color: "#A1A1AA" }}>{body}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </Section>
-
       {/* ===================== HOW IT WORKS ===================== */}
       <Section id="how">
-        <Reveal><Overline>HOW IT WORKS</Overline></Reveal>
+        <Reveal><Eyebrow sanskrit="ॐ Margadarshan">HOW IT WORKS</Eyebrow></Reveal>
         <Reveal delay={0.05}>
-          <h2 className="hero-headline text-4xl md:text-5xl mt-4 max-w-3xl">Three quiet steps.<br />One remarkable report.</h2>
+          <h2 className="hero-headline text-4xl md:text-5xl mt-4 max-w-3xl">From photo to destiny<br />in three quiet steps.</h2>
         </Reveal>
 
         <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { n: "01", t: "Upload your palm", d: "Snap or upload a clear image of one or both palms. Good lighting is enough — we handle the rest." },
-            { n: "02", t: "AI analysis", d: "Our vision engine reads over 40 signals and synthesizes them into a modern life profile." },
-            { n: "03", t: "Read your report", d: "A beautifully designed report you'll actually want to revisit — and share with friends." },
+            { n: "01", badge: "< 30 sec", t: "Photograph your palm", d: "Snap a clear photo of your dominant hand — no filters, no editing. Works on any smartphone camera." },
+            { n: "02", badge: "~ 90 sec", t: "AI reads 15+ markers", d: "Our vision engine identifies your Life, Heart, Fate, Head, Marriage & Sun lines — plus all 7 mounts — trained on ancient Shastra." },
+            { n: "03", badge: "Instant", t: "Get your destiny report", d: "A 2,000-word personalised report lands instantly — career, love, wealth, life phases and spiritual path." },
           ].map((s, i) => (
             <Reveal key={s.n} delay={0.08 * i}>
               <div className="grid-exposure rounded-2xl p-8 h-full">
-                <p className="font-serif text-5xl" style={{ color: COPPER }}>{s.n}</p>
+                <div className="flex items-center justify-between">
+                  <p className="font-serif text-5xl" style={{ color: COPPER }}>{s.n}</p>
+                  <span className="font-mono text-xs px-3 py-1 rounded-full border inline-flex items-center gap-1.5" style={{ borderColor: "rgba(255,255,255,0.1)", color: GOLD }}>
+                    <Clock className="w-3 h-3" />{s.badge}
+                  </span>
+                </div>
                 <h3 className="hero-headline text-2xl mt-6">{s.t}</h3>
                 <p className="mt-3 font-light leading-relaxed" style={{ color: "#A1A1AA" }}>{s.d}</p>
               </div>
@@ -261,65 +284,143 @@ export default function Landing() {
         </div>
       </Section>
 
-      {/* ===================== INSIDE YOUR REPORT — BENTO ===================== */}
+      {/* ===================== FIVE TRUTHS (features) ===================== */}
       <Section id="features">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          <Reveal className="md:col-span-8">
-            <div className="grid-exposure rounded-2xl p-10 relative overflow-hidden h-full">
+        <Reveal><Eyebrow sanskrit="ॐ Gyan Shakti">WHAT YOUR PALM REVEALS</Eyebrow></Reveal>
+        <Reveal delay={0.05}>
+          <h2 className="hero-headline text-4xl md:text-5xl mt-4 max-w-3xl">Five truths written<br />in your palm.</h2>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <p className="mt-4 max-w-2xl font-light leading-relaxed" style={{ color: "#A1A1AA" }}>
+            Not birth-date predictions. Insights decoded from the lines, mounts and patterns unique to YOUR hand — like a fingerprint of your future.
+          </p>
+        </Reveal>
+
+        <div className="mt-14 grid grid-cols-1 md:grid-cols-12 gap-6">
+          <Reveal className="md:col-span-7">
+            <div className="grid-exposure rounded-2xl p-10 h-full relative overflow-hidden">
               <div className="absolute -right-24 -bottom-16 w-[46%] hidden md:block pointer-events-none">
                 <img src={REPORT_MOCKUP} alt="Sample PalmMitra report" className="w-full rounded-xl opacity-90 rotate-[4deg] shadow-[0_20px_60px_rgba(0,0,0,0.6)]" />
               </div>
               <div className="relative md:max-w-md">
-                <Overline>INSIDE YOUR REPORT</Overline>
-                <h2 className="hero-headline text-4xl md:text-5xl mt-4">Depth without the noise.</h2>
+                <span className="font-mono text-[0.65rem] px-2 py-1 rounded-full" style={{ background: "rgba(217,119,87,0.12)", color: COPPER }}>MOST SOUGHT AFTER</span>
+                <Briefcase className="w-7 h-7 mt-6 mb-4" style={{ color: COPPER }} strokeWidth={1.3} />
+                <h3 className="hero-headline text-3xl md:text-4xl">Know your next breakthrough year before it arrives</h3>
                 <p className="mt-4 font-light leading-relaxed" style={{ color: "#A1A1AA" }}>
-                  Career, love, wealth, health, timeline, hidden talents, decision style, risk profile — organized like a private strategy memo.
+                  Your Fate & Sun lines pinpoint professional turning points, the industries built for you, and the exact years when career leaps are written in your palm.
                 </p>
-                <div className="mt-10 grid grid-cols-2 gap-3">
-                {[
-                  { icon: Briefcase, l: "Career" },
-                  { icon: Heart, l: "Love & Marriage" },
-                  { icon: Coins, l: "Wealth Potential" },
-                  { icon: Activity, l: "Health" },
-                  { icon: TrendingUp, l: "Lucky Years" },
-                  { icon: Brain, l: "Decision Style" },
-                ].map(({ icon: I, l }) => (
-                  <div key={l} className="flex items-center gap-3 p-4 rounded-xl border" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-                    <I className="w-4 h-4" style={{ color: COPPER }} strokeWidth={1.4} />
-                    <span className="text-sm" style={{ color: "#F4F4F5" }}>{l}</span>
-                  </div>
-                ))}
               </div>
-            </div>
             </div>
           </Reveal>
 
-          <Reveal className="md:col-span-4" delay={0.1}>
-            <div id="sample" className="grid-exposure rounded-2xl p-8 flex flex-col justify-between h-full">
-              <div>
-                <p className="overline">SAMPLE</p>
-                <h3 className="hero-headline text-3xl mt-4">Overall Score</h3>
-                <div className="mt-6 flex items-baseline gap-2">
-                  <span className="font-serif text-7xl not-italic" style={{ color: COPPER, fontStyle: "italic" }}>89</span>
-                  <span style={{ color: "#71717A" }}>/ 100</span>
+          <div className="md:col-span-5 grid grid-cols-1 gap-6">
+            {[
+              { icon: Heart, t: "See when deep love forms", d: "Your Heart & Marriage lines reveal the age window for your most significant relationships and the depth you need in a partner." },
+              { icon: Coins, t: "Discover your richest years", d: "The Mount of Venus and Sun line pinpoint your financial growth windows and the actions that accelerate wealth on your path." },
+            ].map(({ icon: Icon, t, d }, i) => (
+              <Reveal key={t} delay={0.08 * (i + 1)}>
+                <div className="grid-exposure rounded-2xl p-8 h-full">
+                  <Icon className="w-6 h-6 mb-5" style={{ color: COPPER }} strokeWidth={1.3} />
+                  <h3 className="hero-headline text-2xl">{t}</h3>
+                  <p className="mt-3 font-light leading-relaxed" style={{ color: "#A1A1AA" }}>{d}</p>
                 </div>
-                <p className="mt-4 text-sm font-light leading-relaxed" style={{ color: "#A1A1AA" }}>
-                  A rare combination of vision and pragmatism. Your next chapter rewards long-arc bets.
-                </p>
-              </div>
-              <a href="/upload" data-testid="sample-cta" className="mt-8 inline-flex items-center gap-1 text-sm transition-colors" style={{ color: COPPER }}>
-                See your own <ArrowUpRight className="w-4 h-4" />
-              </a>
-            </div>
-          </Reveal>
+              </Reveal>
+            ))}
+          </div>
         </div>
+
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[
+            { icon: TrendingUp, t: "The 3 years that will change your life", d: "A personalised Lucky Periods Timeline maps your highest-potential windows for career moves, relationships and investments." },
+            { icon: Sparkles, t: "Daily practices aligned with your destiny", d: "Targeted spiritual remedies chosen for your palm patterns — removing obstacles and amplifying the energies already in your hands." },
+          ].map(({ icon: Icon, t, d }, i) => (
+            <Reveal key={t} delay={0.08 * i}>
+              <div className="grid-exposure rounded-2xl p-8 h-full">
+                <Icon className="w-6 h-6 mb-5" style={{ color: COPPER }} strokeWidth={1.3} />
+                <h3 className="hero-headline text-2xl">{t}</h3>
+                <p className="mt-3 font-light leading-relaxed" style={{ color: "#A1A1AA" }}>{d}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </Section>
+
+      {/* ===================== SAMPLE REPORT REVEAL (free/premium) ===================== */}
+      <Section id="sample">
+        <div className="absolute right-0 top-10 w-[420px] h-[420px] opacity-[0.05] pointer-events-none hidden md:block">
+          <img src={MANDALA} alt="" className="w-full h-full slow-spin" />
+        </div>
+        <Reveal><Eyebrow sanskrit="ॐ Drishtant">SAMPLE REPORT</Eyebrow></Reveal>
+        <Reveal delay={0.05}>
+          <h2 className="hero-headline text-4xl md:text-5xl mt-4 max-w-3xl">This is what your report reveals.</h2>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <p className="mt-4 max-w-2xl font-light leading-relaxed" style={{ color: "#A1A1AA" }}>
+            Two sections are always free. See real insight before you spend anything.
+          </p>
+        </Reveal>
+
+        <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[
+            { tag: "FREE", free: true, t: "Life Line Analysis", d: "Strong, deep vitality line with a notable branch at age 34–36 suggesting a major life shift — a career change, relocation, or relationship that redefines your path." },
+            { tag: "FREE", free: true, t: "Heart Line Meaning", d: "A deep, curved heart line reveals intense emotional depth and loyalty. You love completely once committed. A significant relationship forms between ages 28 and 33." },
+            { tag: "PREMIUM", free: false, t: "Fate Line Direction", d: "Career success predicted after age 28 with momentum building in 2026–2028. Your fate line forks near the Mount of Saturn indicating a pivotal choice between two compelling paths…" },
+            { tag: "PREMIUM", free: false, t: "Mount of Jupiter", d: "Leadership qualities present — ambition runs strong. The mount elevation indicates a rise to authority before age 40, particularly in fields where you inspire and direct others…" },
+          ].map((s, i) => (
+            <Reveal key={s.t} delay={0.06 * i}>
+              <div className="grid-exposure rounded-2xl p-8 h-full relative overflow-hidden">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="hero-headline text-2xl">{s.t}</h3>
+                  <span
+                    className="font-mono text-[0.6rem] px-2.5 py-1 rounded-full inline-flex items-center gap-1"
+                    style={s.free
+                      ? { background: "rgba(16,185,129,0.12)", color: "#10B981" }
+                      : { background: "rgba(217,119,87,0.14)", color: COPPER }}
+                  >
+                    {s.free ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}{s.tag}
+                  </span>
+                </div>
+                <p className={`font-light leading-relaxed ${s.free ? "" : "blur-[3px] select-none"}`} style={{ color: "#A1A1AA" }}>{s.d}</p>
+                {!s.free && (
+                  <div className="absolute inset-x-0 bottom-0 pt-16 pb-6 px-8 flex items-end justify-center" style={{ background: "linear-gradient(to top, #0A0A0A 30%, transparent)" }}>
+                    <span className="text-xs font-mono" style={{ color: COPPER }}>Unlock to read →</span>
+                  </div>
+                )}
+              </div>
+            </Reveal>
+          ))}
+        </div>
+
+        <Reveal delay={0.2}>
+          <div className="mt-10 flex flex-col sm:flex-row items-center gap-4">
+            <Link
+              to="/upload"
+              data-testid="sample-cta"
+              className="inline-flex items-center gap-2 rounded-full px-8 py-4 font-medium text-black transition-all duration-300 hover:-translate-y-0.5"
+              style={{ background: COPPER, boxShadow: "0 8px 40px rgba(217,119,87,0.35)" }}
+            >
+              Unlock My Full Reading <ArrowUpRight className="w-4 h-4" />
+            </Link>
+            <span className="text-sm font-mono" style={{ color: "#71717A" }}>2 sections free · Full report ₹299 · PDF included</span>
+          </div>
+        </Reveal>
       </Section>
 
       {/* ===================== TESTIMONIALS ===================== */}
       <Section id="testimonials">
-        <Reveal><Overline>PRAISE</Overline></Reveal>
+        <Reveal><Eyebrow sanskrit="ॐ Jana Vani">PRAISE</Eyebrow></Reveal>
         <Reveal delay={0.05}>
-          <h2 className="hero-headline text-4xl md:text-5xl mt-4 max-w-3xl">Trusted by people who<br />don't trust easily.</h2>
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mt-4">
+            <h2 className="hero-headline text-4xl md:text-5xl max-w-2xl">Real people.<br />Real revelations.</h2>
+            <div className="flex items-center gap-8">
+              {[["4.9", "Avg rating"], ["2,100+", "Reviews"], ["98%", "Satisfaction"]].map(([v, l]) => (
+                <div key={l}>
+                  <p className="hero-headline text-3xl" style={{ color: GOLD }}>{v}</p>
+                  <p className="text-xs" style={{ color: "#71717A" }}>{l}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </Reveal>
 
         <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -345,22 +446,74 @@ export default function Landing() {
         </div>
       </Section>
 
-      {/* ===================== PRICING — technical grid + tracing beam ===================== */}
-      <Section id="pricing">
-        <Reveal><Overline>PRICING</Overline></Reveal>
+      {/* ===================== COMPARISON TABLE ===================== */}
+      <Section id="compare">
+        <Reveal><Eyebrow sanskrit="ॐ Viveka Darshan">WHY PALMMITRA</Eyebrow></Reveal>
         <Reveal delay={0.05}>
-          <h2 className="hero-headline text-4xl md:text-5xl mt-4 max-w-3xl">Choose your depth.</h2>
+          <h2 className="hero-headline text-4xl md:text-5xl mt-4 max-w-3xl">Not all readings are<br />created equal.</h2>
+        </Reveal>
+
+        <Reveal delay={0.1}>
+          <div className="mt-14 overflow-x-auto" data-testid="comparison-table">
+            <div className="min-w-[640px] grid grid-cols-4 rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
+              {/* header row */}
+              <div className="p-6" style={{ background: "rgba(255,255,255,0.015)" }}>
+                <p className="text-sm" style={{ color: "#71717A" }}>Compare</p>
+              </div>
+              {[
+                { t: "Horoscope App", s: "Generic · birth-date", hi: false },
+                { t: "PalmMitra AI", s: "YOUR palm · YOUR destiny", hi: true },
+                { t: "Manual Palmist", s: "Offline · subjective", hi: false },
+              ].map((c) => (
+                <div key={c.t} className="p-6 text-center relative" style={{ background: c.hi ? "rgba(217,119,87,0.08)" : "rgba(255,255,255,0.015)" }}>
+                  {c.hi && <span className="absolute top-2 left-1/2 -translate-x-1/2 font-mono text-[0.55rem] px-2 py-0.5 rounded-full" style={{ background: COPPER, color: "#000" }}>BEST CHOICE</span>}
+                  <p className="hero-headline text-lg mt-2" style={{ color: c.hi ? COPPER : "#F4F4F5" }}>{c.t}</p>
+                  <p className="text-xs mt-1" style={{ color: "#71717A" }}>{c.s}</p>
+                </div>
+              ))}
+              {/* feature rows */}
+              {compareRows.map((row, ri) => (
+                <React.Fragment key={row}>
+                  <div className="p-5 text-sm flex items-center" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", color: "#A1A1AA" }}>{row}</div>
+                  {[false, true, ri < 4].map((val, ci) => (
+                    <div key={ci} className="p-5 flex items-center justify-center" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: ci === 1 ? "rgba(217,119,87,0.05)" : "transparent" }}>
+                      {val ? <Check className="w-5 h-5" style={{ color: ci === 1 ? COPPER : "#10B981" }} /> : <X className="w-5 h-5" style={{ color: "#3f3f46" }} />}
+                    </div>
+                  ))}
+                </React.Fragment>
+              ))}
+              {/* price row */}
+              <div className="p-5 text-sm flex items-center" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", color: "#F4F4F5" }}>Price</div>
+              {[
+                { p: "Free", s: "generic" },
+                { p: "₹299", s: "free preview" },
+                { p: "₹500–5,000", s: "per session" },
+              ].map((c, ci) => (
+                <div key={ci} className="p-5 text-center" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: ci === 1 ? "rgba(217,119,87,0.05)" : "transparent" }}>
+                  <p className="hero-headline text-xl" style={{ color: ci === 1 ? COPPER : "#F4F4F5" }}>{c.p}</p>
+                  <p className="text-xs" style={{ color: "#71717A" }}>{c.s}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Reveal>
+      </Section>
+
+      {/* ===================== PRICING ===================== */}
+      <Section id="pricing">
+        <Reveal><Eyebrow sanskrit="ॐ Sampatti Yoga">PRICING</Eyebrow></Reveal>
+        <Reveal delay={0.05}>
+          <h2 className="hero-headline text-4xl md:text-5xl mt-4 max-w-3xl">Start free. Unlock everything.</h2>
         </Reveal>
 
         <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { n: "AI Palm Insight", p: "₹299", suf: "one-time", d: "One complete personalized report. Everything you need to start.", cta: "Analyze My Palm", hi: false, tid: "pricing-insight" },
+            { n: "AI Palm Insight", p: "₹299", suf: "one-time", d: "One complete personalised report. Everything you need to start.", cta: "Analyze My Palm", hi: false, tid: "pricing-insight" },
             { n: "PalmMitra Plus", p: "₹399", suf: "/ month", d: "Daily guidance, unlimited reports, AI chat, monthly life forecast.", cta: "Start Plus", hi: true, tid: "pricing-plus" },
-            { n: "PalmMitra Elite", p: "₹4,999", suf: "one-time", d: "The complete package. Compatibility, PDF magazine, priority support.", cta: "Go Elite", hi: false, tid: "pricing-elite" },
+            { n: "PalmMitra Elite", p: "₹4,999", suf: "lifetime", d: "The flagship — unlimited readings for the whole family, PalmMatch & priority AI.", cta: "Go Elite", hi: false, tid: "pricing-elite" },
           ].map((plan, i) => (
             <Reveal key={plan.n} delay={0.08 * i}>
               <div data-testid={plan.tid} className="relative h-full rounded-2xl p-[1px] overflow-hidden">
-                {/* Tracing beam only on highlighted plan */}
                 {plan.hi && (
                   <motion.div
                     aria-hidden
@@ -370,10 +523,7 @@ export default function Landing() {
                     transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
                   />
                 )}
-                <div
-                  className="relative rounded-2xl p-10 h-full flex flex-col"
-                  style={{ background: "#0A0A0A", border: plan.hi ? "1px solid transparent" : "1px solid rgba(255,255,255,0.08)" }}
-                >
+                <div className="relative rounded-2xl p-10 h-full flex flex-col" style={{ background: "#0A0A0A", border: plan.hi ? "1px solid transparent" : "1px solid rgba(255,255,255,0.08)" }}>
                   {plan.hi && <p className="overline mb-6" style={{ color: COPPER }}>MOST POPULAR</p>}
                   <h3 className="hero-headline text-2xl">{plan.n}</h3>
                   <div className="mt-6 flex items-baseline gap-2">
@@ -384,12 +534,11 @@ export default function Landing() {
                   <Link
                     to="/upload"
                     className="mt-8 inline-block w-full text-center rounded-full py-3.5 text-sm font-medium transition-all duration-300 hover:-translate-y-0.5"
-                    style={plan.hi
-                      ? { background: COPPER, color: "#000" }
-                      : { border: "1px solid rgba(255,255,255,0.15)", color: "#F4F4F5" }}
+                    style={plan.hi ? { background: COPPER, color: "#000" } : { border: "1px solid rgba(255,255,255,0.15)", color: "#F4F4F5" }}
                   >
                     {plan.cta}
                   </Link>
+                  <p className="mt-4 text-center text-xs" style={{ color: "#71717A" }}>Money-back guarantee</p>
                 </div>
               </div>
             </Reveal>
@@ -399,20 +548,15 @@ export default function Landing() {
 
       {/* ===================== FAQ ===================== */}
       <Section id="faq">
-        <Reveal><Overline>FAQ</Overline></Reveal>
+        <Reveal><Eyebrow sanskrit="ॐ Prashna Samadhan">FAQ</Eyebrow></Reveal>
         <Reveal delay={0.05}>
-          <h2 className="hero-headline text-4xl md:text-5xl mt-4 max-w-3xl">Answers, if you're wondering.</h2>
+          <h2 className="hero-headline text-4xl md:text-5xl mt-4 max-w-3xl">Your questions, honestly answered.</h2>
         </Reveal>
 
         <Reveal delay={0.1} className="mt-14 max-w-3xl">
           <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((f, idx) => (
-              <AccordionItem
-                key={idx}
-                value={`f${idx}`}
-                className="grid-exposure rounded-2xl px-6"
-                data-testid={`faq-item-${idx}`}
-              >
+              <AccordionItem key={idx} value={`f${idx}`} className="grid-exposure rounded-2xl px-6" data-testid={`faq-item-${idx}`}>
                 <AccordionTrigger className="text-left text-base hover:no-underline py-5">{f.q}</AccordionTrigger>
                 <AccordionContent className="font-light leading-relaxed pb-5" style={{ color: "#A1A1AA" }}>{f.a}</AccordionContent>
               </AccordionItem>
@@ -421,22 +565,28 @@ export default function Landing() {
         </Reveal>
       </Section>
 
-      {/* ===================== FINAL CTA ===================== */}
+      {/* ===================== FINAL CTA + COUNTDOWN ===================== */}
       <Section>
         <Reveal>
-          <div className="rounded-2xl p-14 text-center relative overflow-hidden" style={{ background: "#0A0A0A", border: "1px solid rgba(217,119,87,0.3)" }}>
+          <div className="rounded-2xl p-10 md:p-14 text-center relative overflow-hidden" style={{ background: "#0A0A0A", border: "1px solid rgba(217,119,87,0.3)" }}>
             <div className="absolute inset-0 opacity-20 pointer-events-none">
               <img src={SMOKE} alt="" className="w-full h-full object-cover" />
             </div>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] opacity-[0.05] pointer-events-none">
+              <img src={MANDALA} alt="" className="w-full h-full slow-spin" />
+            </div>
             <div className="relative">
-              <h2 className="hero-headline text-4xl md:text-6xl">Your future is patient.<br />Are you?</h2>
+              <span className="font-serif text-xl" style={{ color: GOLD }}>ॐ Kaal Chakra</span>
+              <h2 className="hero-headline text-4xl md:text-6xl mt-4">Your destiny won't wait.<br />Neither should you.</h2>
+              <p className="mt-4 text-sm font-mono" style={{ color: "#A1A1AA" }}>₹50 launch offer expires in — use code <span style={{ color: GOLD }}>PALMFRIEND</span></p>
+              <div className="mt-6"><Countdown /></div>
               <Link
                 to="/upload"
                 data-testid="cta-final-btn"
                 className="inline-flex items-center gap-2 mt-10 rounded-full px-10 py-4 font-medium text-black transition-all duration-300 hover:-translate-y-0.5"
                 style={{ background: COPPER, boxShadow: "0 8px 40px rgba(217,119,87,0.35)" }}
               >
-                Analyze My Palm — ₹299
+                Scan My Palm — Free
                 <Sparkles className="w-4 h-4" />
               </Link>
             </div>
