@@ -13,14 +13,15 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "..
 const COPPER = "#D97757";
 const GOLD = "#E4B248";
 
-const HERO_BG = "https://images.unsplash.com/photo-1556703588-6eae2585e025?crop=entropy&cs=srgb&fm=jpg&q=85&w=1600";
-const SMOKE = "https://images.unsplash.com/photo-1761845086689-e90380bac227?crop=entropy&cs=srgb&fm=jpg&q=85&w=1600";
-const AI_SPHERE = "https://images.pexels.com/photos/31650383/pexels-photo-31650383.jpeg";
+const HERO_BG = "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/c6d1ba3ca67adf16f29a57d3445eff22b18e94a571df753a9d71737f2d02fd6f.png";
+const SMOKE = "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/2dda7208bd695171871b5c5897885d5b603a43495963c69940f5de315e8de80a.png";
+const AI_SPHERE = "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/d29c00fa518a0cfb066d44b99599aeaee18583d5978225155b720cd1f00d19d5.png";
+const REPORT_MOCKUP = "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/015fb14b2549d8f223fcbbeb1cdd335896704a39fe7c0b4ccb171930a924718f.png";
 
 const testimonials = [
-  { name: "Ananya Rao", role: "Founder, Verve Studio", quote: "It felt like a private consultation with someone who truly understood me. The clarity was unreal." },
-  { name: "Kabir Malhotra", role: "Product Lead, Nexo", quote: "The recommendations for the next quarter were spot-on. I referred five friends the same week." },
-  { name: "Isha Kapoor", role: "Investor", quote: "PalmMitra is what happens when AI meets craft. This is what luxury software should feel like." },
+  { name: "Ananya Rao", role: "Founder, Verve Studio", quote: "It felt like a private consultation with someone who truly understood me. The clarity was unreal.", img: "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/a2201cf2e1429c43781d36cec2cfcb35aa6d531d4d9b003f1abb47814d08e09f.png" },
+  { name: "Kabir Malhotra", role: "Product Lead, Nexo", quote: "The recommendations for the next quarter were spot-on. I referred five friends the same week.", img: "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/f7093c34306c5dc067c51f154a472f24b09d7786911a4b6ceba8787f2c78ca03.png" },
+  { name: "Isha Kapoor", role: "Investor", quote: "PalmMitra is what happens when AI meets craft. This is what luxury software should feel like.", img: "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/39365bf8953cacd3fee50507d7705c33f44e6ab99a8322ab292b6242aee45f06.png" },
 ];
 
 const faqs = [
@@ -67,8 +68,8 @@ export default function Landing() {
       {/* ===================== HERO — asymmetric bento ===================== */}
       <section className="relative">
         <div className="absolute inset-0 pointer-events-none">
-          <img src={HERO_BG} alt="" className="w-full h-full object-cover opacity-[0.18]" />
-          <div className="absolute inset-0" style={{ background: "radial-gradient(120% 90% at 20% 0%, rgba(5,5,5,0.4) 0%, #050505 70%)" }} />
+          <img src={HERO_BG} alt="" className="w-full h-full object-cover opacity-[0.32]" />
+          <div className="absolute inset-0" style={{ background: "radial-gradient(120% 90% at 20% 0%, rgba(5,5,5,0.35) 0%, rgba(5,5,5,0.85) 55%, #050505 80%)" }} />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-6 md:px-12 pt-20 pb-24 md:pt-28 md:pb-36">
@@ -132,8 +133,8 @@ export default function Landing() {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, ease, delay: 0.5 }}
               >
                 <div className="flex -space-x-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="w-8 h-8 rounded-full border-2" style={{ borderColor: "#050505", background: "rgba(255,255,255,0.08)" }} />
+                  {testimonials.map((t) => (
+                    <img key={t.name} src={t.img} alt="" className="w-8 h-8 rounded-full object-cover border-2" style={{ borderColor: "#050505" }} />
                   ))}
                 </div>
                 <div>
@@ -265,12 +266,16 @@ export default function Landing() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           <Reveal className="md:col-span-8">
             <div className="grid-exposure rounded-2xl p-10 relative overflow-hidden h-full">
-              <Overline>INSIDE YOUR REPORT</Overline>
-              <h2 className="hero-headline text-4xl md:text-5xl mt-4">Depth without the noise.</h2>
-              <p className="mt-4 max-w-xl font-light leading-relaxed" style={{ color: "#A1A1AA" }}>
-                Career, love, wealth, health, timeline, hidden talents, decision style, risk profile — organized like a private strategy memo.
-              </p>
-              <div className="mt-10 grid grid-cols-2 gap-3">
+              <div className="absolute -right-24 -bottom-16 w-[46%] hidden md:block pointer-events-none">
+                <img src={REPORT_MOCKUP} alt="Sample PalmMitra report" className="w-full rounded-xl opacity-90 rotate-[4deg] shadow-[0_20px_60px_rgba(0,0,0,0.6)]" />
+              </div>
+              <div className="relative md:max-w-md">
+                <Overline>INSIDE YOUR REPORT</Overline>
+                <h2 className="hero-headline text-4xl md:text-5xl mt-4">Depth without the noise.</h2>
+                <p className="mt-4 font-light leading-relaxed" style={{ color: "#A1A1AA" }}>
+                  Career, love, wealth, health, timeline, hidden talents, decision style, risk profile — organized like a private strategy memo.
+                </p>
+                <div className="mt-10 grid grid-cols-2 gap-3">
                 {[
                   { icon: Briefcase, l: "Career" },
                   { icon: Heart, l: "Love & Marriage" },
@@ -285,6 +290,7 @@ export default function Landing() {
                   </div>
                 ))}
               </div>
+            </div>
             </div>
           </Reveal>
 
@@ -327,7 +333,7 @@ export default function Landing() {
                   <p className="font-serif text-2xl leading-snug" style={{ color: "#F4F4F5" }}>"{t.quote}"</p>
                 </div>
                 <div className="mt-8 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full border" style={{ borderColor: "rgba(255,255,255,0.1)", background: "radial-gradient(circle at 30% 30%, rgba(217,119,87,0.4), transparent)" }} />
+                  <img src={t.img} alt={t.name} className="w-10 h-10 rounded-full object-cover border" style={{ borderColor: "rgba(217,119,87,0.4)" }} />
                   <div>
                     <p className="text-sm">{t.name}</p>
                     <p className="text-xs" style={{ color: "#71717A" }}>{t.role}</p>
