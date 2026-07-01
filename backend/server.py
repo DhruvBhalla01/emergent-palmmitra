@@ -17,6 +17,9 @@ from datetime import datetime, timezone, timedelta
 import bcrypt
 import jwt as pyjwt
 import httpx
+import hmac
+import hashlib
+import razorpay
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
 
@@ -466,10 +469,25 @@ async def create_order(data: PaymentOrderRequest, user: User = Depends(get_curre
     razorpay_key = os.environ.get("RAZORPAY_KEY_ID", "")
     razorpay_secret = os.environ.get("RAZORPAY_KEY_SECRET", "")
 
-    order_id = f"order_{uuid.uuid4().hex[:14]}"
-
-    # If Razorpay keys not configured, create a mock order.
     mock = not (razorpay_key and razorpay_secret)
+    razorpay_order_id = None
+
+    if not mock:
+        try:
+            rzp_client = razorpay.Client(auth=(razorpay_key, razorpay_secret))
+            rzp_order = rzp_client.order.create({
+                "amount": plan["amount_inr"],
+                "currency": "INR",
+                "receipt": f"pm_{data.report_id[-16:]}",
+                "notes": {"user_id": user.user_id, "plan": data.plan, "report_id": data.report_id},
+            })
+            razorpay_order_id = rzp_order["id"]
+        except Exception as e:
+            logger.exception("Razorpay order creation failed")
+            raise HTTPException(status_code=502, detail=f"Payment gateway error: {str(e)[:200]}")
+        order_id = razorpay_order_id
+    else:
+        order_id = f"order_{uuid.uuid4().hex[:14]}"
 
     doc = {
         "order_id": order_id,
@@ -499,8 +517,18 @@ async def verify_payment(data: PaymentVerifyRequest, user: User = Depends(get_cu
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    # If Razorpay keys are configured, verify signature (placeholder logic).
-    # For now, if mock=True or signature provided, mark as paid.
+    razorpay_secret = os.environ.get("RAZORPAY_KEY_SECRET", "")
+    if not order.get("mock") and razorpay_secret:
+        if not (data.payment_id and data.signature):
+            raise HTTPException(status_code=400, detail="Missing payment_id or signature")
+        expected = hmac.new(
+            razorpay_secret.encode(),
+            f"{data.order_id}|{data.payment_id}".encode(),
+            hashlib.sha256,
+        ).hexdigest()
+        if not hmac.compare_digest(expected, data.signature):
+            raise HTTPException(status_code=400, detail="Invalid signature")
+
     await db.payment_orders.update_one(
         {"order_id": data.order_id},
         {"$set": {"status": "paid", "payment_id": data.payment_id, "signature": data.signature,
