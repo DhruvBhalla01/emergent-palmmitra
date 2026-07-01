@@ -1,0 +1,103 @@
+{
+  "theme": "dark",
+  "archetype": "5 (Luxury)",
+  "design_philosophy": "Apple level simplicity, Headspace level calmness, Notion level polish, Stripe level trust, Luxury fashion brand aesthetics. No gradients everywhere. No cheap glowing buttons. No cartoon illustrations. Lots of white space. Perfect typography. Luxury spacing. Micro animations. Glassmorphism only where necessary. Rounded corners. Smooth transitions.",
+  "colors": {
+    "background": {
+      "default": "#000000",
+      "surface": "#0A0A0A",
+      "surface_elevated": "#141414",
+      "glass": "rgba(20, 20, 20, 0.7)"
+    },
+    "primary": {
+      "DEFAULT": "#D4AF37",
+      "light": "#F5D061",
+      "dark": "#997A15",
+      "foreground": "#000000"
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#E0E0E0",
+      "muted": "#A0A0A0"
+    },
+    "border": {
+      "default": "rgba(255, 255, 255, 0.1)",
+      "gold": "rgba(212, 175, 55, 0.3)",
+      "focus": "#D4AF37"
+    }
+  },
+  "typography": {
+    "fonts": {
+      "heading": "'Playfair Display', serif",
+      "body": "'Outfit', sans-serif",
+      "mono": "'JetBrains Mono', monospace"
+    },
+    "scale": {
+      "h1": "text-5xl sm:text-6xl tracking-tight leading-none font-medium",
+      "h2": "text-3xl sm:text-4xl tracking-tight font-medium",
+      "h3": "text-2xl sm:text-3xl tracking-tight font-medium",
+      "h4": "text-xl font-medium",
+      "body": "text-base sm:text-lg leading-relaxed text-secondary",
+      "small": "text-sm text-muted uppercase tracking-[0.2em]"
+    }
+  },
+  "spacing_and_layout": {
+    "generous_padding": "p-8 sm:p-12",
+    "bento_grid": {
+      "container": "grid grid-cols-1 md:grid-cols-12 gap-8",
+      "hero_card": "col-span-full md:col-span-8 row-span-2",
+      "standard_card": "col-span-1 md:col-span-4",
+      "tall_card": "col-span-1 md:col-span-4 row-span-2"
+    },
+    "corners": "rounded-2xl sm:rounded-3xl",
+    "section_spacing": "py-24 sm:py-32"
+  },
+  "surfaces_and_effects": {
+    "glassmorphism": "backdrop-blur-xl bg-black/60 border border-white/10",
+    "card": "bg-[#0A0A0A] border border-white/10 hover:border-[#D4AF37]/50 transition-colors duration-300",
+    "premium_paywall_blur": "backdrop-blur-md bg-black/40",
+    "shadows": {
+      "subtle": "shadow-[0_8px_32px_rgba(212,175,55,0.05)]",
+      "glow": "shadow-[0_0_24px_rgba(212,175,55,0.2)]"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#D4AF37] text-black hover:bg-[#F5D061] transition-all duration-300 rounded-full px-8 py-4 font-medium",
+      "secondary": "bg-transparent text-white border border-white/20 hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all duration-300 rounded-full px-8 py-4 font-medium"
+    },
+    "navigation": "sticky top-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/10 py-4",
+    "inputs": "bg-[#141414] border border-white/20 rounded-xl px-4 py-3 text-white focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
+  },
+  "media_and_images": {
+    "hero_background": {
+      "url": "https://images.pexels.com/photos/21031387/pexels-photo-21031387.jpeg",
+      "description": "Intricate golden wave patterns creating a luxurious abstract art piece. Use with strong dark overlay (bg-black/60) so text pops."
+    },
+    "ai_analysis_visual": {
+      "url": "https://images.pexels.com/photos/31650383/pexels-photo-31650383.jpeg",
+      "description": "Artistic abstract gold sphere. Used during the AI palm scan loading phase to represent the AI processing data."
+    },
+    "testimonial_avatar_1": {
+      "url": "https://images.unsplash.com/photo-1782109747977-59cd7d34e321",
+      "description": "Premium customer portrait for testimonial."
+    }
+  },
+  "animation_guidelines": {
+    "micro_interactions": "All interactive elements should have hover states (transform, opacity, border color) taking 300ms ease.",
+    "page_transitions": "Framer motion staggered fade-ups for bento grid cards.",
+    "loading_state": "Smooth looping rotation of the gold sphere with changing text for AI insights generation (20-40 sec). No jerky movements."
+  },
+  "testing_attributes": {
+    "rule": "All interactive and key informational elements MUST include a data-testid attribute in kebab-case format.",
+    "examples": ["data-testid='upload-palm-button'", "data-testid='premium-paywall-cta'"]
+  },
+  "instructions_to_main_agent": [
+    "Ensure 'Playfair Display' and 'Outfit' fonts are imported.",
+    "Use Shadcn components but strip default borders and shadows, replacing them with the dark luxury styles defined here.",
+    "The hero section should feel like an Apple product page: massive Playfair text, extremely clean layout, slow revealing animations.",
+    "For the report bento grid, use heavy padding (p-8) and avoid solid borders where possible—prefer very subtle white/10 borders.",
+    "The Paywall should use heavy backdrop blur (backdrop-blur-md) over the premium report content, with a centered glassmorphism card prompting payment via Razorpay.",
+    "Never use blue, green, or red alerts. Use muted white or gold for all status indicators."
+  ]
+}
