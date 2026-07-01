@@ -40,6 +40,7 @@ function AppRouter() {
 function App() {
   return (
     <div className="App">
+      <div className="aura-bg" aria-hidden="true" />
       <BrowserRouter>
         <AuthProvider>
           <AppRouter />
