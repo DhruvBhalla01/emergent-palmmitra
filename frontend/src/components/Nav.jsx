@@ -23,6 +23,7 @@ export default function Nav() {
           <a href="/#how" className="hover:text-white transition-colors">How it works</a>
           <a href="/#features" className="hover:text-white transition-colors">Features</a>
           <a href="/#pricing" className="hover:text-white transition-colors">Pricing</a>
+          <a href="/palmmatch" className="hover:text-white transition-colors" data-testid="nav-palmmatch">PalmMatch</a>
           <a href="/blog" className="hover:text-white transition-colors">Journal</a>
           <a href="/#faq" className="hover:text-white transition-colors">FAQ</a>
         </div>

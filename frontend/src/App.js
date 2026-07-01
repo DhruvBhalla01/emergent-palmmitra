@@ -8,6 +8,9 @@ import AuthCallback from "./pages/AuthCallback";
 import Upload from "./pages/Upload";
 import Analyzing from "./pages/Analyzing";
 import Report from "./pages/Report";
+import PalmMatch from "./pages/PalmMatch";
+import PalmMatchAnalyzing from "./pages/PalmMatchAnalyzing";
+import PalmMatchResult from "./pages/PalmMatchResult";
 import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
 import Admin from "./pages/Admin";
@@ -28,6 +31,9 @@ function AppRouter() {
       <Route path="/upload" element={<Upload />} />
       <Route path="/analyzing" element={<Analyzing />} />
       <Route path="/report/:id" element={<Report />} />
+      <Route path="/palmmatch" element={<PalmMatch />} />
+      <Route path="/palmmatch/analyzing" element={<PalmMatchAnalyzing />} />
+      <Route path="/palmmatch/:id" element={<PalmMatchResult />} />
       <Route path="/chat/:id" element={<Chat />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/admin" element={<Admin />} />

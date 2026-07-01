@@ -76,6 +76,13 @@ class PalmAnalysisRequest(BaseModel):
     name: Optional[str] = None
     dob: Optional[str] = None
 
+class PalmMatchRequest(BaseModel):
+    palm_a_base64: Optional[str] = None
+    palm_b_base64: Optional[str] = None
+    name_a: Optional[str] = None
+    name_b: Optional[str] = None
+    relationship: Optional[str] = None  # couple | friends | family | business
+
 class PaymentOrderRequest(BaseModel):
     report_id: str
     plan: str  # "insight" | "plus" | "elite" | "match"
@@ -469,11 +476,148 @@ async def get_report(report_id: str, user: User = Depends(get_current_user)):
     return doc
 
 
+# ====================== PALMMATCH (Compatibility) ======================
+
+PALMMATCH_SYSTEM_PROMPT = """You are PalmMitra AI, a premium AI compatibility analyst.
+You analyze TWO palm images to produce a personalized, insightful compatibility report between two people.
+Draw on Hasta Samudrika Shastra principles, framed through a modern, warm, non-mystical lens.
+Be honest and specific, never generic. Always return VALID JSON only. No markdown, no code fences, no commentary."""
+
+PALMMATCH_SCHEMA_INSTRUCTIONS = """
+Return a JSON object with EXACTLY this schema:
+{
+  "headline": "<one-line premium headline about this pairing>",
+  "overall_compat": <int 60-98>,
+  "verdict": "<one short line, e.g. 'Soulmate Connection' or 'Grounded, growth-oriented match'>",
+  "summary": "<3 sentence premium overview of the connection>",
+  "categories": [
+    {"name": "Emotional Bond", "score": <int 60-98>, "detail": "<2 sentences>"},
+    {"name": "Communication", "score": <int 60-98>, "detail": "<2 sentences>"},
+    {"name": "Romance & Passion", "score": <int 60-98>, "detail": "<2 sentences>"},
+    {"name": "Life Goals", "score": <int 60-98>, "detail": "<2 sentences>"},
+    {"name": "Spiritual Alignment", "score": <int 60-98>, "detail": "<2 sentences>"},
+    {"name": "Long-term Harmony", "score": <int 60-98>, "detail": "<2 sentences>"}
+  ],
+  "strengths": ["<s1>", "<s2>", "<s3>"],
+  "watch_outs": ["<w1>", "<w2>", "<w3>"],
+  "remedies": ["<r1>", "<r2>", "<r3>"],
+  "closing": "<2 sentence warm closing about the pair's potential>"
+}
+Scores are integers 60-98. Palm A is the first image, Palm B is the second. Keep language elegant, modern, warm and actionable."""
+
+
+async def _generate_palmmatch(name_a: str, name_b: str, relationship: str, images: List[str]) -> Dict[str, Any]:
+    session_id = f"match_{uuid.uuid4().hex[:10]}"
+    chat = LlmChat(
+        api_key=EMERGENT_LLM_KEY,
+        session_id=session_id,
+        system_message=PALMMATCH_SYSTEM_PROMPT,
+    ).with_model("openai", "gpt-5.2")
+
+    intro = (
+        f"Partner A: {name_a or 'Person A'}. Partner B: {name_b or 'Person B'}. "
+        f"Relationship type: {relationship or 'couple'}.\n\n"
+        "The FIRST image is Partner A's palm, the SECOND image is Partner B's palm.\n"
+    )
+    prompt = intro + "Analyze both palms and produce the compatibility report.\n" + PALMMATCH_SCHEMA_INSTRUCTIONS
+
+    files = [ImageContent(image_base64=b) for b in images if b]
+    msg = UserMessage(text=prompt, file_contents=files if files else None)
+    text = await chat.send_message(msg)
+
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```$", "", cleaned)
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        m = re.search(r"\{[\s\S]*\}", cleaned)
+        if m:
+            return json.loads(m.group(0))
+        raise
+
+
+@api_router.post("/palmmatch/analyze")
+async def analyze_palmmatch(data: PalmMatchRequest, user: User = Depends(get_current_user)):
+    if not data.palm_a_base64 or not data.palm_b_base64:
+        raise HTTPException(status_code=400, detail="Both palm images are required")
+
+    images = [_strip_data_url(data.palm_a_base64), _strip_data_url(data.palm_b_base64)]
+    match_id = f"mtc_{uuid.uuid4().hex[:12]}"
+    now = datetime.now(timezone.utc).isoformat()
+
+    await db.palmmatch_reports.insert_one({
+        "match_id": match_id,
+        "user_id": user.user_id,
+        "status": "processing",
+        "name_a": data.name_a,
+        "name_b": data.name_b,
+        "relationship": data.relationship or "couple",
+        "created_at": now,
+        "unlocked": False,
+    })
+
+    try:
+        report_json = await _generate_palmmatch(data.name_a or "Person A", data.name_b or "Person B", data.relationship or "couple", images)
+    except Exception as e:
+        logger.exception("PalmMatch generation failed")
+        await db.palmmatch_reports.update_one({"match_id": match_id}, {"$set": {"status": "failed", "error": str(e)}})
+        raise HTTPException(status_code=500, detail=f"Compatibility analysis failed: {str(e)[:200]}")
+
+    await db.palmmatch_reports.update_one(
+        {"match_id": match_id},
+        {"$set": {"status": "ready", "report": report_json, "completed_at": datetime.now(timezone.utc).isoformat()}},
+    )
+    return {"match_id": match_id, "status": "ready"}
+
+
+@api_router.get("/palmmatch/list")
+async def list_palmmatch(user: User = Depends(get_current_user)):
+    docs = await db.palmmatch_reports.find(
+        {"user_id": user.user_id},
+        {"_id": 0, "report.overall_compat": 1, "report.headline": 1, "report.verdict": 1,
+         "match_id": 1, "status": 1, "created_at": 1, "unlocked": 1, "name_a": 1, "name_b": 1},
+    ).sort("created_at", -1).to_list(100)
+    return docs
+
+
+@api_router.get("/palmmatch/{match_id}")
+async def get_palmmatch(match_id: str, user: User = Depends(get_current_user)):
+    doc = await db.palmmatch_reports.find_one({"match_id": match_id, "user_id": user.user_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Match report not found")
+
+    if not doc.get("unlocked", False) and doc.get("report"):
+        # Free-preview: overall + first 2 categories full, rest gated
+        full = doc["report"]
+        cats = full.get("categories", []) or []
+        preview_cats = []
+        for i, c in enumerate(cats):
+            if i < 2:
+                preview_cats.append(c)
+            else:
+                preview_cats.append({"name": c.get("name"), "score": c.get("score")})
+        preview = {
+            "headline": full.get("headline"),
+            "overall_compat": full.get("overall_compat"),
+            "verdict": full.get("verdict"),
+            "summary": full.get("summary"),
+            "categories": preview_cats,
+        }
+        doc["report"] = preview
+        doc["locked"] = True
+        doc["free_sections"] = 2
+    else:
+        doc["locked"] = False
+    return doc
+
+
 # ====================== PAYMENT (Razorpay placeholder) ======================
 
 PLAN_PRICES = {
     "insight": {"amount_inr": 29900, "usd": 999, "name": "AI Palm Insight"},   # ₹299
-    "match": {"amount_inr": 99900, "usd": 2499, "name": "PalmMatch Compatibility"},  # ₹999
+    "match": {"amount_inr": 499900, "usd": 5999, "name": "PalmMatch Compatibility"},  # ₹4999
     "plus": {"amount_inr": 39900, "usd": 999, "name": "PalmMitra Plus Monthly"},   # ₹399
     "elite": {"amount_inr": 499900, "usd": 14900, "name": "PalmMitra Elite"},  # ₹4999
 }
@@ -564,6 +708,12 @@ async def verify_payment(data: PaymentVerifyRequest, user: User = Depends(get_cu
         {"report_id": data.report_id, "user_id": user.user_id},
         {"$set": {"unlocked": True}},
     )
+    # Unlock PalmMatch report (match plan uses match_id as report_id)
+    if order.get("plan") == "match":
+        await db.palmmatch_reports.update_one(
+            {"match_id": data.report_id, "user_id": user.user_id},
+            {"$set": {"unlocked": True}},
+        )
 
     # Subscription lifecycle
     now = datetime.now(timezone.utc)

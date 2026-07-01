@@ -48,8 +48,12 @@ Build PalmMitra from scratch — a premium AI Life Guidance Platform where palm 
 - Report.jsx locked view: overall score + summary + score grid + 2 free sections ("2 SECTIONS FREE" green badge), then blurred remainder + "12 more sections are waiting" paywall (₹299).
 - Verified via API + browser screenshots.
 
+## Phase 3 — PalmMatch product (2026-07-01)
+- Backend: `palmmatch_reports` collection; `POST /api/palmmatch/analyze` (2 palms → GPT-5.2 compatibility JSON: overall_compat, 6 categories, strengths/watch_outs/remedies/closing), `GET /api/palmmatch/list`, `GET /api/palmmatch/{id}` with free-preview (overall + verdict + summary + 2 full categories; rest score-only, extras gated). `match` plan repriced to ₹4,999; `verify_payment` unlocks palmmatch_reports for match plan.
+- Frontend: `/palmmatch` (A/B upload + names + relationship pills), `/palmmatch/analyzing`, `/palmmatch/:id` (compat ring + category bars + free-preview paywall ₹4,999). Nav "PalmMatch" link + landing "Introducing PalmMatch" section.
+- Verified: backend preview/unlock logic via API (2 free cats, rest gated → full on unlock); frontend via screenshots. NOTE: live LLM analyze (needs 2 real palm images) and real Razorpay checkout not auto-tested — production flows.
+
 ## Next Tasks
-1. **Phase 3 — PalmMatch** (two-palm compatibility, ₹4,999): `palmmatch_reports` collection, `POST /api/palmmatch/analyze` + `GET /api/palmmatch/{id}`, reprice `match` plan→₹4,999, frontend `/palmmatch` upload(A/B)→analyzing→result (compat ring + category bars + paywall), landing/nav entry.
-2. Optional polish: hero "40+"→"15+ markers"; refine Nav/Footer `P` mark to copper.
-3. Razorpay webhook listener; real Razorpay keys → go live.
-4. Refactor high-complexity backend fns + large React components (P2).
+1. Optional polish: hero "40+"→"15+ markers"; refine Nav/Footer `P` mark to copper; add PalmMatch to Dashboard list.
+2. Razorpay webhook listener (`POST /api/payment/webhook`) — prevent lost revenue on early browser close.
+3. Refactor high-complexity backend fns + large React components (P2).

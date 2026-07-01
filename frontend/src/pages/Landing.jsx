@@ -345,6 +345,55 @@ export default function Landing() {
         </div>
       </Section>
 
+      {/* ===================== PALMMATCH ===================== */}
+      <Section id="palmmatch">
+        <div className="rounded-3xl p-10 md:p-14 relative overflow-hidden" style={{ background: "#0A0A0A", border: "1px solid rgba(217,119,87,0.2)" }}>
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[420px] h-[420px] opacity-[0.06] pointer-events-none hidden md:block">
+            <img src={MANDALA} alt="" className="w-full h-full slow-spin" />
+          </div>
+          <div className="relative grid grid-cols-1 md:grid-cols-12 gap-10 items-center">
+            <div className="md:col-span-7">
+              <div className="flex items-center gap-3">
+                <span className="font-serif text-lg md:text-xl" style={{ color: GOLD }}>ॐ Yugal Rekha</span>
+                <span className="overline">NEW · COMPATIBILITY</span>
+              </div>
+              <h2 className="hero-headline text-4xl md:text-5xl mt-4">Introducing PalmMatch.</h2>
+              <p className="mt-4 max-w-xl font-light leading-relaxed" style={{ color: "#A1A1AA" }}>
+                Upload two palms. Discover your compatibility, emotional bond, and destiny alignment — powered by ancient Hast Rekha Shastra and modern AI. For couples, friends, siblings & business partners.
+              </p>
+              <Link
+                to="/palmmatch"
+                data-testid="palmmatch-cta"
+                className="inline-flex items-center gap-2 mt-8 rounded-full px-8 py-4 font-medium text-black transition-all duration-300 hover:-translate-y-0.5"
+                style={{ background: COPPER, boxShadow: "0 8px 40px rgba(217,119,87,0.35)" }}
+              >
+                Try PalmMatch — Free <ArrowUpRight className="w-4 h-4" />
+              </Link>
+            </div>
+            <div className="md:col-span-5">
+              <div className="grid-exposure rounded-2xl p-8 text-center">
+                <div className="flex items-center justify-center gap-4 mb-6">
+                  <div className="w-12 h-12 rounded-full border flex items-center justify-center font-serif text-lg" style={{ borderColor: "rgba(217,119,87,0.4)", color: GOLD }}>A</div>
+                  <Heart className="w-5 h-5 fill-current" style={{ color: COPPER }} />
+                  <div className="w-12 h-12 rounded-full border flex items-center justify-center font-serif text-lg" style={{ borderColor: "rgba(217,119,87,0.4)", color: GOLD }}>B</div>
+                </div>
+                <p className="hero-headline text-6xl" style={{ color: COPPER }}>87<span className="text-2xl text-white/40">%</span></p>
+                <p className="overline mt-1">Overall Compatibility</p>
+                <div className="mt-6 space-y-3 text-left">
+                  {[["Emotional Bond", 88], ["Communication", 74], ["Spiritual Alignment", 79]].map(([l, v]) => (
+                    <div key={l}>
+                      <div className="flex justify-between text-xs mb-1"><span style={{ color: "#A1A1AA" }}>{l}</span><span style={{ color: GOLD }}>{v}%</span></div>
+                      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${v}%`, background: COPPER }} /></div>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-6 text-[0.65rem] font-mono" style={{ color: "#71717A" }}>*Sample — your results are personalised</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Section>
+
       {/* ===================== SAMPLE REPORT REVEAL (free/premium) ===================== */}
       <Section id="sample">
         <div className="absolute right-0 top-10 w-[420px] h-[420px] opacity-[0.05] pointer-events-none hidden md:block">
