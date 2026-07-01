@@ -21,17 +21,17 @@ Build PalmMitra from scratch — a premium AI Life Guidance Platform where palm 
 - Palm upload: drag-drop + camera capture, JPEG/PNG/WEBP validation, dual palm slots, name/DOB inputs, quality guidelines
 - Analyzing screen: animated palm-scan SVG with gold scan line + rotating gold sphere, 12 rotating insight stages, progress bar
 - AI Analysis: GPT-5.2 vision analyzes palm image(s) and returns 20+ section JSON report (personality, career, money, love, marriage, family, health, strengths, weaknesses, hidden talents, lucky years, life timeline, action plan, recommendations, summary, etc.)
-- Report page: Overall score ring, 6 category score cards, PAYWALL with blurred preview + glassmorphism unlock CTA when locked; full luxurious sectioned report when unlocked (bento grid, chips, timeline)
+- Report page: Overall score ring, 6 category score cards, PAYWALL with blurred preview + glassmorphism unlock CTA when locked; full luxurious sectioned report when unlocked
 - Payments: `/api/payment/plans`, create-order + verify (auto-unlocks in mock mode; ready for Razorpay checkout script)
-- Dashboard: user greeting, upgrade banner, list of prior reports with scores, new-analysis CTA
-- Design system: Playfair Display + Outfit fonts, black + #D4AF37 gold, rounded-3xl corners, generous spacing, subtle borders, no ugly gradients
+- Dashboard: user greeting, subscription + referral cards, list of prior reports, new-analysis CTA
+- **P1 (2026-02): PDF magazine export** — reportlab generates A4 luxury PDF with gold cover + all sections; `/api/palm/reports/{id}/pdf` served with blob download
+- **P1 (2026-02): Referral system** — auto-generated PM[hex6] codes, `/api/referral/me` + `/apply`; ₹100 credit on referred user's first paid order; shareable link on dashboard
+- **P1 (2026-02): AI Chat with report memory** — `/api/chat/{report_id}/message` uses GPT-5.2 with the user's report as system-context; chat history persisted in `chat_messages`; frontend `/chat/:id` page with suggestion chips
+- **P1 (2026-02): Subscription lifecycle** — `subscription` field on user with plan/status/period_end/canceled_at; `/api/subscription/status` + `/cancel`; auto-activated on plus/elite payment verify; dashboard subscription card with cancel button
 
 ## Backlog (P0/P1/P2)
 - **P0** Add real Razorpay API keys to `.env` (user will provide) — checkout.js already loaded
-- **P1** PDF report export (magazine-quality layout)
-- **P1** Referral system: codes, credits, leaderboard, share links
-- **P1** Subscription lifecycle (Plus monthly renewals, cancellation, dunning)
-- **P1** AI Chat with the report as context (memory of prior reports)
+- **P1** Razorpay auto-renewal for Plus (uses Razorpay Subscriptions API)
 - **P2** Daily/weekly/monthly guidance for Plus users
 - **P2** Admin dashboard (users, revenue, coupons, feature flags, AI logs)
 - **P2** Coupon codes at checkout
@@ -40,6 +40,6 @@ Build PalmMitra from scratch — a premium AI Life Guidance Platform where palm 
 - **P2** Apple sign-in
 
 ## Next Tasks
-1. Ship real Razorpay integration once keys are provided
-2. Add PDF export (server-side rendering with reportlab or client-side with html2pdf)
-3. Referral system (models + share flow)
+1. Add real Razorpay keys → go live
+2. Razorpay Subscriptions API for auto-renewal of Plus
+3. Admin dashboard
