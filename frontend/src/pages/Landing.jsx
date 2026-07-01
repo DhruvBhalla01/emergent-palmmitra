@@ -1,9 +1,11 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import { track } from "../lib/analytics";
+import { api } from "../lib/api";
+import { useAuth } from "../lib/AuthContext";
 import {
   Sparkles, Brain, Heart, Briefcase, Coins, Activity,
   ShieldCheck, Zap, TrendingUp, Star, ArrowUpRight, Fingerprint,
@@ -103,7 +105,47 @@ const compareRows = [
 ];
 
 export default function Landing() {
-  React.useEffect(() => { track("landing_view"); }, []);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [cfg, setCfg] = React.useState(null);
+  const [billing, setBilling] = React.useState("yearly");
+  const [checkingOut, setCheckingOut] = React.useState(false);
+
+  React.useEffect(() => {
+    track("landing_view");
+    api.get("/config").then((r) => setCfg(r.data)).catch(() => {});
+  }, []);
+
+  const monthly = cfg?.membership?.monthly_inr ?? 399;
+  const yearly = cfg?.membership?.yearly_inr ?? 3499;
+  const savings = cfg?.membership?.yearly_savings_pct ?? 27;
+  const reportPrice = cfg?.report_price_inr ?? 299;
+
+  const startMembership = async () => {
+    track("membership_checkout_start", { billing });
+    if (!user) { navigate("/auth"); return; }
+    setCheckingOut(true);
+    try {
+      const plan = billing === "yearly" ? "membership_yearly" : "membership_monthly";
+      const { data: order } = await api.post("/payment/create-order", { plan, report_id: "" });
+      if (order.mock) {
+        await api.post("/payment/verify", { order_id: order.order_id });
+        navigate("/dashboard");
+      } else {
+        const rzp = new window.Razorpay({
+          key: order.razorpay_key, amount: order.amount, currency: order.currency,
+          name: "PalmMitra", description: order.plan?.name || "PalmMitra Membership", order_id: order.order_id,
+          handler: async (resp) => {
+            await api.post("/payment/verify", { order_id: order.order_id, payment_id: resp.razorpay_payment_id, signature: resp.razorpay_signature });
+            navigate("/dashboard");
+          },
+          theme: { color: COPPER },
+        });
+        rzp.open();
+      }
+    } catch (e) { /* toast handled globally */ }
+    finally { setCheckingOut(false); }
+  };
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: "#050505", color: "#F4F4F5" }} data-testid="landing-page">
@@ -548,50 +590,92 @@ export default function Landing() {
         </Reveal>
       </Section>
 
-      {/* ===================== PRICING ===================== */}
+      {/* ===================== PRICING (membership-first) ===================== */}
       <Section id="pricing">
-        <Reveal><Eyebrow sanskrit="ॐ Sampatti Yoga">PRICING</Eyebrow></Reveal>
+        <Reveal><Eyebrow sanskrit="ॐ Sampatti Yoga">MEMBERSHIP</Eyebrow></Reveal>
         <Reveal delay={0.05}>
-          <h2 className="hero-headline text-4xl md:text-5xl mt-4 max-w-3xl">Start free. Unlock everything.</h2>
+          <h2 className="hero-headline text-4xl md:text-5xl mt-4 max-w-3xl">Less a purchase.<br />More a companion for life.</h2>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <p className="mt-4 max-w-2xl font-light leading-relaxed" style={{ color: "#A1A1AA" }}>
+            Begin with a single reading — or step into an ongoing relationship with an AI that remembers you, understands your journey, and guides you whenever life feels uncertain.
+          </p>
         </Reveal>
 
-        <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { n: "AI Palm Insight", p: "₹299", suf: "one-time", d: "One complete personalised report. Everything you need to start.", cta: "Analyze My Palm", hi: false, tid: "pricing-insight" },
-            { n: "PalmMitra Plus", p: "₹399", suf: "/ month", d: "Daily guidance, unlimited reports, AI chat, monthly life forecast.", cta: "Start Plus", hi: true, tid: "pricing-plus" },
-            { n: "PalmMitra Elite", p: "₹4,999", suf: "lifetime", d: "The flagship — unlimited readings for the whole family, PalmMatch & priority AI.", cta: "Go Elite", hi: false, tid: "pricing-elite" },
-          ].map((plan, i) => (
-            <Reveal key={plan.n} delay={0.08 * i}>
-              <div data-testid={plan.tid} className="relative h-full rounded-2xl p-[1px] overflow-hidden">
-                {plan.hi && (
-                  <motion.div
-                    aria-hidden
-                    className="absolute -inset-[60%]"
-                    style={{ background: `conic-gradient(from 0deg, transparent 0deg, ${COPPER} 40deg, ${GOLD} 70deg, transparent 110deg)` }}
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-                  />
-                )}
-                <div className="relative rounded-2xl p-10 h-full flex flex-col" style={{ background: "#0A0A0A", border: plan.hi ? "1px solid transparent" : "1px solid rgba(255,255,255,0.08)" }}>
-                  {plan.hi && <p className="overline mb-6" style={{ color: COPPER }}>MOST POPULAR</p>}
-                  <h3 className="hero-headline text-2xl">{plan.n}</h3>
-                  <div className="mt-6 flex items-baseline gap-2">
-                    <span className="hero-headline text-5xl">{plan.p}</span>
-                    <span className="text-sm" style={{ color: "#71717A" }}>{plan.suf}</span>
+        <div className="mt-14 grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+          {/* Entry — one-time report (secondary) */}
+          <Reveal className="md:col-span-4">
+            <div data-testid="pricing-report" className="rounded-2xl p-8 h-full flex flex-col" style={{ background: "#0A0A0A", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <p className="overline">Begin your journey</p>
+              <h3 className="hero-headline text-2xl mt-4">AI Palm Report</h3>
+              <div className="mt-5 flex items-baseline gap-2">
+                <span className="hero-headline text-4xl">₹{reportPrice}</span>
+                <span className="text-sm" style={{ color: "#71717A" }}>one-time</span>
+              </div>
+              <ul className="mt-6 space-y-3 text-sm flex-1" style={{ color: "#A1A1AA" }}>
+                {["Full 14-section personalised report", "2 complimentary AI questions", "Beautiful downloadable PDF", "A first taste of your journey"].map((f) => (
+                  <li key={f} className="flex gap-2"><Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#71717A" }} />{f}</li>
+                ))}
+              </ul>
+              <Link to="/upload" data-testid="pricing-report-cta" className="mt-8 inline-block w-full text-center rounded-full py-3.5 text-sm border transition-all hover:-translate-y-0.5" style={{ borderColor: "rgba(255,255,255,0.15)", color: "#F4F4F5" }}>
+                Get My Report
+              </Link>
+            </div>
+          </Reveal>
+
+          {/* Membership — dominant */}
+          <Reveal className="md:col-span-8" delay={0.08}>
+            <div data-testid="pricing-membership" className="relative h-full rounded-3xl p-[1.5px] overflow-hidden">
+              <motion.div aria-hidden className="absolute -inset-[55%]" style={{ background: `conic-gradient(from 0deg, transparent 0deg, ${COPPER} 45deg, ${GOLD} 80deg, transparent 120deg)` }} animate={{ rotate: 360 }} transition={{ duration: 7, repeat: Infinity, ease: "linear" }} />
+              <div className="relative rounded-3xl p-10 h-full flex flex-col md:flex-row gap-10" style={{ background: "#0A0A0A" }}>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="overline" style={{ color: COPPER }}>PALMMITRA MEMBERSHIP</span>
+                    <span className="text-[0.6rem] font-mono px-2 py-0.5 rounded-full" style={{ background: "rgba(228,178,72,0.15)", color: GOLD }}>MOST CHOSEN</span>
                   </div>
-                  <p className="mt-4 text-sm font-light leading-relaxed flex-1" style={{ color: "#A1A1AA" }}>{plan.d}</p>
-                  <Link
-                    to="/upload"
-                    className="mt-8 inline-block w-full text-center rounded-full py-3.5 text-sm font-medium transition-all duration-300 hover:-translate-y-0.5"
-                    style={plan.hi ? { background: COPPER, color: "#000" } : { border: "1px solid rgba(255,255,255,0.15)", color: "#F4F4F5" }}
-                  >
-                    {plan.cta}
-                  </Link>
-                  <p className="mt-4 text-center text-xs" style={{ color: "#71717A" }}>Money-back guarantee</p>
+                  <h3 className="hero-headline text-3xl md:text-4xl mt-4">Your personal AI life mentor.</h3>
+
+                  {/* billing toggle */}
+                  <div className="mt-7 inline-flex items-center rounded-full p-1 border" style={{ borderColor: "rgba(255,255,255,0.1)" }} data-testid="billing-toggle">
+                    {[["monthly", "Monthly"], ["yearly", "Yearly"]].map(([k, l]) => (
+                      <button key={k} onClick={() => setBilling(k)} data-testid={`billing-${k}`} className="px-5 py-2 rounded-full text-sm transition-all" style={billing === k ? { background: COPPER, color: "#000" } : { color: "#A1A1AA" }}>
+                        {l}{k === "yearly" && <span className="ml-1 text-[0.65rem]" style={{ color: billing === k ? "#000" : GOLD }}>Save {savings}%</span>}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="mt-6 flex items-baseline gap-2">
+                    <span className="hero-headline text-6xl">₹{billing === "yearly" ? Math.round(yearly / 12) : monthly}</span>
+                    <span className="text-sm" style={{ color: "#71717A" }}>/ month</span>
+                  </div>
+                  <p className="mt-1 text-sm" style={{ color: "#71717A" }}>
+                    {billing === "yearly" ? `Billed ₹${yearly}/year · ~3 months free` : `Billed monthly · cancel anytime`}
+                  </p>
+
+                  <button onClick={startMembership} disabled={checkingOut} data-testid="membership-cta" className="mt-8 inline-flex items-center gap-2 rounded-full px-8 py-4 font-medium text-black transition-all hover:-translate-y-0.5 disabled:opacity-50" style={{ background: COPPER, boxShadow: "0 8px 40px rgba(217,119,87,0.35)" }}>
+                    {checkingOut ? "Starting…" : "Become a Member"} <ArrowUpRight className="w-4 h-4" />
+                  </button>
+                  <p className="mt-3 text-xs" style={{ color: "#71717A" }}>Cancel anytime · 7-day money-back guarantee</p>
+                </div>
+
+                <div className="md:w-72 md:border-l md:pl-10" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+                  <p className="overline mb-5">What you feel</p>
+                  <ul className="space-y-3.5 text-sm" style={{ color: "#D4D4D8" }}>
+                    {[
+                      "Guidance whenever life feels uncertain",
+                      "Ask unlimited questions unique to your palm",
+                      "An AI that remembers you & every reading",
+                      "Daily nudges · weekly plans · monthly forecast",
+                      "Priority, faster answers + every new tool first",
+                      "Premium member badge",
+                    ].map((f) => (
+                      <li key={f} className="flex gap-2.5"><Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: COPPER }} />{f}</li>
+                    ))}
+                  </ul>
                 </div>
               </div>
-            </Reveal>
-          ))}
+            </div>
+          </Reveal>
         </div>
       </Section>
 

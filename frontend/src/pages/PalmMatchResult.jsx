@@ -201,7 +201,7 @@ export default function PalmMatchResult() {
                 <h2 className="hero-headline text-3xl sm:text-4xl">Your complete match report awaits.</h2>
                 <p className="mt-4 text-white/70 max-w-md mx-auto">All six dimensions decoded, plus relationship strengths, watch-outs, personalised remedies and a beautiful shareable summary.</p>
                 <button onClick={unlock} disabled={unlocking} data-testid="unlock-match-btn" className="mt-10 w-full sm:w-auto inline-block font-medium rounded-full px-10 py-4 transition-all hover:-translate-y-0.5 disabled:opacity-50" style={{ background: COPPER, color: "#000" }}>
-                  {unlocking ? "Processing…" : "Unlock Full Report — ₹4,999"}
+                  {unlocking ? "Processing…" : "Unlock Full Report — ₹1,999"}
                 </button>
                 <div className="mt-6 flex items-center justify-center gap-6 text-xs text-white/40">
                   <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> Secure</span>

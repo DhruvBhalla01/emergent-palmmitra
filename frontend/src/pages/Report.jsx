@@ -271,7 +271,21 @@ export default function Report() {
             </div>
           </div>
         ) : (
-          <FullReport r={r} />
+          <>
+            <Link to={`/chat/${id}`} data-testid="continue-journey-banner" className="block mt-8 mb-8 rounded-3xl p-8 sm:p-10 relative overflow-hidden group transition-transform hover:-translate-y-0.5" style={{ background: "#0A0A0A", border: "1px solid rgba(217,119,87,0.3)" }}>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] mb-2" style={{ color: "#D4AF37" }}>Continue your journey</p>
+                  <h3 className="hero-headline text-2xl sm:text-3xl">Talk to your Personal AI Palm Guide</h3>
+                  <p className="mt-2 text-sm text-white/60 max-w-lg">It already knows everything in your report. Ask anything — your first 2 questions are on us.</p>
+                </div>
+                <span className="inline-flex items-center gap-2 rounded-full px-6 py-3 font-medium text-black shrink-0" style={{ background: "#D4AF37" }}>
+                  <MessageCircle className="w-4 h-4" /> Start chatting
+                </span>
+              </div>
+            </Link>
+            <FullReport r={r} />
+          </>
         )}
       </div>
     </div>

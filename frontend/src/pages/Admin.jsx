@@ -14,6 +14,8 @@ export default function Admin() {
   const [users, setUsers] = useState([]);
   const [coupons, setCoupons] = useState([]);
   const [funnel, setFunnel] = useState([]);
+  const [config, setConfig] = useState(null);
+  const [savingCfg, setSavingCfg] = useState(false);
   const [newCoupon, setNewCoupon] = useState({ code: "", discount_inr: 0, discount_pct: 0, max_uses: 100 });
 
   useEffect(() => {
@@ -21,16 +23,26 @@ export default function Admin() {
     if (!user) { navigate("/auth"); return; }
     (async () => {
       try {
-        const [s, u, c, f] = await Promise.all([
+        const [s, u, c, f, cfg] = await Promise.all([
           api.get("/admin/stats"), api.get("/admin/users"),
-          api.get("/admin/coupons"), api.get("/admin/funnel"),
+          api.get("/admin/coupons"), api.get("/admin/funnel"), api.get("/admin/config"),
         ]);
-        setStats(s.data); setUsers(u.data); setCoupons(c.data); setFunnel(f.data);
+        setStats(s.data); setUsers(u.data); setCoupons(c.data); setFunnel(f.data); setConfig(cfg.data);
       } catch (e) {
         if (e?.response?.status === 403) { toast.error("Admin access required"); navigate("/dashboard"); }
       }
     })();
   }, [user, loading, navigate]);
+
+  const saveConfig = async () => {
+    setSavingCfg(true);
+    try {
+      const { data } = await api.put("/admin/config", { config });
+      setConfig(data);
+      toast.success("Pricing config saved");
+    } catch (e) { toast.error(e?.response?.data?.detail || "Save failed"); }
+    finally { setSavingCfg(false); }
+  };
 
   const createCoupon = async () => {
     if (!newCoupon.code.trim()) return;
@@ -66,7 +78,7 @@ export default function Admin() {
         <h1 className="hero-headline text-4xl sm:text-5xl">Operations.</h1>
 
         <div className="mt-8 flex gap-1 border-b border-white/[0.06]">
-          {["overview", "users", "coupons", "funnel"].map((t) => (
+          {["overview", "pricing", "users", "coupons", "funnel"].map((t) => (
             <button key={t} onClick={() => setTab(t)} data-testid={`admin-tab-${t}`}
               className={`px-4 py-3 text-sm capitalize ${tab === t ? "text-[#D4AF37] border-b border-[#D4AF37]" : "text-white/50 hover:text-white/80"}`}>
               {t}
@@ -86,7 +98,58 @@ export default function Admin() {
               ))}
             </div>
           )}
-          {tab === "users" && (
+          {tab === "pricing" && config && (
+            <div className="space-y-6" data-testid="admin-pricing">
+              <div className="p-6 rounded-2xl border border-white/[0.06] bg-[#0A0A0A]">
+                <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-4">Membership & one-time prices (₹)</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {[
+                    ["Monthly", () => config.membership.monthly_inr, (v) => setConfig({ ...config, membership: { ...config.membership, monthly_inr: v } })],
+                    ["Yearly", () => config.membership.yearly_inr, (v) => setConfig({ ...config, membership: { ...config.membership, yearly_inr: v } })],
+                    ["Yearly savings %", () => config.membership.yearly_savings_pct, (v) => setConfig({ ...config, membership: { ...config.membership, yearly_savings_pct: v } })],
+                    ["Report price", () => config.report_price_inr, (v) => setConfig({ ...config, report_price_inr: v })],
+                    ["PalmMatch price", () => config.palmmatch_price_inr, (v) => setConfig({ ...config, palmmatch_price_inr: v })],
+                    ["Free questions", () => config.free_question_limit, (v) => setConfig({ ...config, free_question_limit: v })],
+                    ["Member daily cap", () => config.member_daily_cap, (v) => setConfig({ ...config, member_daily_cap: v })],
+                  ].map(([label, get, set]) => (
+                    <label key={label} className="block">
+                      <span className="text-xs text-white/40">{label}</span>
+                      <input type="number" value={get()} onChange={(e) => set(Number(e.target.value))} data-testid={`cfg-${label.toLowerCase().replace(/[^a-z]+/g, "-")}`} className="mt-1 w-full bg-[#141414] border border-white/10 rounded-lg px-3 py-2 text-sm" />
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-6 rounded-2xl border border-white/[0.06] bg-[#0A0A0A]">
+                <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-4">Question price tiers (₹)</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {config.question_tiers.map((t, i) => (
+                    <label key={t.key} className="block">
+                      <span className="text-xs text-white/40">{t.label}</span>
+                      <input type="number" value={t.cost_inr} onChange={(e) => { const q = [...config.question_tiers]; q[i] = { ...t, cost_inr: Number(e.target.value) }; setConfig({ ...config, question_tiers: q }); }} data-testid={`cfg-tier-${t.key}`} className="mt-1 w-full bg-[#141414] border border-white/10 rounded-lg px-3 py-2 text-sm" />
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-6 rounded-2xl border border-white/[0.06] bg-[#0A0A0A]">
+                <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-4">Wallet recharge packs (pay ₹ → credit ₹)</p>
+                <div className="space-y-3">
+                  {config.wallet_packs.map((p, i) => (
+                    <div key={p.key} className="grid grid-cols-3 gap-3 items-center">
+                      <span className="text-sm font-mono text-white/60">{p.key}</span>
+                      <input type="number" value={p.pay_inr} onChange={(e) => { const w = [...config.wallet_packs]; w[i] = { ...p, pay_inr: Number(e.target.value) }; setConfig({ ...config, wallet_packs: w }); }} className="bg-[#141414] border border-white/10 rounded-lg px-3 py-2 text-sm" placeholder="pay" />
+                      <input type="number" value={p.credit_inr} onChange={(e) => { const w = [...config.wallet_packs]; w[i] = { ...p, credit_inr: Number(e.target.value) }; setConfig({ ...config, wallet_packs: w }); }} className="bg-[#141414] border border-white/10 rounded-lg px-3 py-2 text-sm" placeholder="credit" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button onClick={saveConfig} disabled={savingCfg} data-testid="save-config-btn" className="bg-[#D4AF37] text-black rounded-full px-8 py-3 text-sm font-medium hover:bg-[#F5D061] disabled:opacity-50">
+                {savingCfg ? "Saving…" : "Save Configuration"}
+              </button>
+            </div>
+          )}
             <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="text-xs uppercase tracking-[0.2em] text-white/40 border-b border-white/[0.06]">

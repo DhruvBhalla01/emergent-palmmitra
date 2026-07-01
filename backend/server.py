@@ -50,6 +50,96 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 
+# ====================== APP CONFIG (all monetization is configurable) ======================
+
+DEFAULT_CONFIG = {
+    "config_id": "pricing",
+    "membership": {"monthly_inr": 399, "yearly_inr": 3499, "yearly_savings_pct": 27},
+    "report_price_inr": 299,
+    "palmmatch_price_inr": 1999,
+    "free_question_limit": 2,
+    "member_daily_cap": 5,
+    "question_tiers": [
+        {"key": "quick", "label": "Quick clarification", "cost_inr": 5},
+        {"key": "standard", "label": "Standard personalized advice", "cost_inr": 10},
+        {"key": "deep", "label": "Deep reasoning", "cost_inr": 20},
+        {"key": "complex", "label": "Complex multi-topic analysis", "cost_inr": 40},
+    ],
+    "wallet_packs": [
+        {"key": "wallet_99", "pay_inr": 99, "credit_inr": 99, "bonus_label": ""},
+        {"key": "wallet_199", "pay_inr": 199, "credit_inr": 230, "bonus_label": "+₹31 bonus"},
+        {"key": "wallet_499", "pay_inr": 499, "credit_inr": 625, "bonus_label": "+₹126 bonus"},
+        {"key": "wallet_999", "pay_inr": 999, "credit_inr": 1350, "bonus_label": "+₹351 bonus"},
+    ],
+    "promo": {"code": "PALMFRIEND", "discount_pct": 10, "active": True},
+}
+
+
+async def get_config() -> Dict[str, Any]:
+    cfg = await db.app_config.find_one({"config_id": "pricing"}, {"_id": 0})
+    if not cfg:
+        await db.app_config.insert_one(dict(DEFAULT_CONFIG))
+        return dict(DEFAULT_CONFIG)
+    # backfill any missing keys
+    merged = {**DEFAULT_CONFIG, **cfg}
+    return merged
+
+
+def _membership_active(u: Dict[str, Any]) -> bool:
+    sub = u.get("subscription") or {}
+    if sub.get("status") != "active":
+        return False
+    if sub.get("plan") not in ("membership", "plus", "elite"):
+        return False
+    end = sub.get("current_period_end")
+    if end:
+        try:
+            e = datetime.fromisoformat(end)
+            if e.tzinfo is None:
+                e = e.replace(tzinfo=timezone.utc)
+            if e < datetime.now(timezone.utc):
+                return False
+        except Exception:
+            pass
+    return True
+
+
+def _estimate_question(msg: str, tiers: List[Dict[str, Any]]) -> Dict[str, Any]:
+    text = (msg or "").lower()
+    words = len(text.split())
+    keywords = ["career", "job", "work", "money", "wealth", "finance", "invest", "business",
+                "love", "marriage", "relationship", "partner", "spouse", "health", "family",
+                "child", "future", "decision", "should i", "when will", "start"]
+    topics = sum(1 for k in keywords if k in text)
+    if words <= 6 and topics <= 1:
+        idx, reason = 0, "A quick clarification — short and focused."
+    elif topics >= 3 or words > 45:
+        idx, reason = 3, "A complex, multi-topic question spanning several areas of your life."
+    elif topics == 2 or words > 22:
+        idx, reason = 2, "A deep question that needs careful reasoning across your report."
+    else:
+        idx, reason = 1, "A standard, personalized question about one area of your life."
+    idx = min(idx, len(tiers) - 1)
+    t = tiers[idx]
+    return {"tier_key": t["key"], "label": t["label"], "cost_inr": t["cost_inr"], "reason": reason}
+
+
+@api_router.get("/config")
+async def public_config():
+    cfg = await get_config()
+    return {
+        "membership": cfg["membership"],
+        "report_price_inr": cfg["report_price_inr"],
+        "palmmatch_price_inr": cfg["palmmatch_price_inr"],
+        "free_question_limit": cfg["free_question_limit"],
+        "member_daily_cap": cfg["member_daily_cap"],
+        "question_tiers": cfg["question_tiers"],
+        "wallet_packs": cfg["wallet_packs"],
+        "promo": cfg["promo"] if cfg.get("promo", {}).get("active") else None,
+    }
+
+
+
 # ====================== MODELS ======================
 
 class UserRegister(BaseModel):
@@ -84,8 +174,8 @@ class PalmMatchRequest(BaseModel):
     relationship: Optional[str] = None  # couple | friends | family | business
 
 class PaymentOrderRequest(BaseModel):
-    report_id: str
-    plan: str  # "insight" | "plus" | "elite" | "match"
+    report_id: Optional[str] = ""
+    plan: str  # insight | membership_monthly | membership_yearly | match | wallet_* | plus | elite
 
 class PaymentVerifyRequest(BaseModel):
     report_id: str
@@ -615,22 +705,42 @@ async def get_palmmatch(match_id: str, user: User = Depends(get_current_user)):
 
 # ====================== PAYMENT (Razorpay placeholder) ======================
 
-PLAN_PRICES = {
-    "insight": {"amount_inr": 29900, "usd": 999, "name": "AI Palm Insight"},   # ₹299
-    "match": {"amount_inr": 499900, "usd": 5999, "name": "PalmMatch Compatibility"},  # ₹4999
-    "plus": {"amount_inr": 39900, "usd": 999, "name": "PalmMitra Plus Monthly"},   # ₹399
-    "elite": {"amount_inr": 499900, "usd": 14900, "name": "PalmMitra Elite"},  # ₹4999
-}
-
-
 @api_router.get("/payment/plans")
 async def plans():
-    return PLAN_PRICES
+    cfg = await get_config()
+    m = cfg["membership"]
+    return {
+        "insight": {"amount_inr": cfg["report_price_inr"] * 100, "name": "AI Palm Report"},
+        "membership_monthly": {"amount_inr": m["monthly_inr"] * 100, "name": "PalmMitra Membership · Monthly"},
+        "membership_yearly": {"amount_inr": m["yearly_inr"] * 100, "name": "PalmMitra Membership · Yearly"},
+        "match": {"amount_inr": cfg["palmmatch_price_inr"] * 100, "name": "PalmMatch Compatibility"},
+    }
+
+
+async def _resolve_plan(plan_key: str) -> Optional[Dict[str, Any]]:
+    cfg = await get_config()
+    m = cfg["membership"]
+    if plan_key == "insight":
+        return {"amount_inr": cfg["report_price_inr"] * 100, "name": "AI Palm Report"}
+    if plan_key == "membership_monthly":
+        return {"amount_inr": m["monthly_inr"] * 100, "name": "PalmMitra Membership · Monthly"}
+    if plan_key == "membership_yearly":
+        return {"amount_inr": m["yearly_inr"] * 100, "name": "PalmMitra Membership · Yearly"}
+    if plan_key == "match":
+        return {"amount_inr": cfg["palmmatch_price_inr"] * 100, "name": "PalmMatch Compatibility"}
+    if plan_key.startswith("wallet_"):
+        for p in cfg["wallet_packs"]:
+            if p["key"] == plan_key:
+                return {"amount_inr": p["pay_inr"] * 100, "name": f"Wallet recharge ₹{p['pay_inr']}", "credit_inr": p["credit_inr"]}
+    # legacy
+    if plan_key in ("plus", "elite"):
+        return {"amount_inr": (m["monthly_inr"] if plan_key == "plus" else cfg["palmmatch_price_inr"]) * 100, "name": plan_key}
+    return None
 
 
 @api_router.post("/payment/create-order")
 async def create_order(data: PaymentOrderRequest, user: User = Depends(get_current_user)):
-    plan = PLAN_PRICES.get(data.plan)
+    plan = await _resolve_plan(data.plan)
     if not plan:
         raise HTTPException(status_code=400, detail="Invalid plan")
 
@@ -646,8 +756,8 @@ async def create_order(data: PaymentOrderRequest, user: User = Depends(get_curre
             rzp_order = rzp_client.order.create({
                 "amount": plan["amount_inr"],
                 "currency": "INR",
-                "receipt": f"pm_{data.report_id[-16:]}",
-                "notes": {"user_id": user.user_id, "plan": data.plan, "report_id": data.report_id},
+                "receipt": f"pm_{(data.report_id or 'na')[-16:]}",
+                "notes": {"user_id": user.user_id, "plan": data.plan, "report_id": data.report_id or ""},
             })
             razorpay_order_id = rzp_order["id"]
         except Exception as e:
@@ -717,24 +827,27 @@ async def verify_payment(data: PaymentVerifyRequest, user: User = Depends(get_cu
 
     # Subscription lifecycle
     now = datetime.now(timezone.utc)
-    if order["plan"] == "plus":
-        sub = {
-            "plan": "plus",
-            "status": "active",
-            "started_at": now.isoformat(),
-            "current_period_end": (now + timedelta(days=30)).isoformat(),
-            "canceled_at": None,
-        }
+    plan_key = order["plan"]
+    if plan_key in ("membership_monthly", "plus"):
+        sub = {"plan": "membership", "billing": "monthly", "status": "active",
+               "started_at": now.isoformat(), "current_period_end": (now + timedelta(days=30)).isoformat(), "canceled_at": None}
         await db.users.update_one({"user_id": user.user_id}, {"$set": {"is_premium": True, "subscription": sub}})
-    elif order["plan"] == "elite":
-        sub = {
-            "plan": "elite",
-            "status": "active",
-            "started_at": now.isoformat(),
-            "current_period_end": None,  # one-time lifetime
-            "canceled_at": None,
-        }
+    elif plan_key == "membership_yearly":
+        sub = {"plan": "membership", "billing": "yearly", "status": "active",
+               "started_at": now.isoformat(), "current_period_end": (now + timedelta(days=365)).isoformat(), "canceled_at": None}
         await db.users.update_one({"user_id": user.user_id}, {"$set": {"is_premium": True, "subscription": sub}})
+    elif plan_key == "elite":
+        sub = {"plan": "elite", "status": "active", "started_at": now.isoformat(), "current_period_end": None, "canceled_at": None}
+        await db.users.update_one({"user_id": user.user_id}, {"$set": {"is_premium": True, "subscription": sub}})
+    elif plan_key.startswith("wallet_"):
+        resolved = await _resolve_plan(plan_key)
+        credit = (resolved or {}).get("credit_inr", 0)
+        await db.users.update_one({"user_id": user.user_id}, {"$inc": {"wallet_balance_inr": credit}})
+        await db.wallet_transactions.insert_one({
+            "user_id": user.user_id, "type": "recharge", "amount_inr": credit,
+            "pay_inr": order["amount_inr"] // 100, "order_id": data.order_id,
+            "created_at": now.isoformat(),
+        })
 
     # Referral credit for referrer on first paid order of the referred user
     user_doc = await db.users.find_one({"user_id": user.user_id}, {"_id": 0})
@@ -771,7 +884,7 @@ async def coupon_validate(data: CouponValidateRequest, user: User = Depends(get_
         raise HTTPException(status_code=404, detail="Invalid coupon")
     if coupon.get("used_count", 0) >= coupon.get("max_uses", 0):
         raise HTTPException(status_code=400, detail="Coupon exhausted")
-    plan_info = PLAN_PRICES.get(data.plan)
+    plan_info = await _resolve_plan(data.plan)
     if not plan_info:
         raise HTTPException(status_code=400, detail="Invalid plan")
     base = plan_info["amount_inr"]
@@ -903,6 +1016,23 @@ async def admin_stats(user: User = Depends(require_admin)):
         "reports": reports_count, "unlocked_reports": unlocked_count,
         "paid_orders": len(orders), "revenue_inr": revenue,
     }
+
+
+@api_router.get("/admin/config")
+async def admin_get_config(user: User = Depends(require_admin)):
+    return await get_config()
+
+
+class ConfigUpdateRequest(BaseModel):
+    config: Dict[str, Any]
+
+
+@api_router.put("/admin/config")
+async def admin_update_config(data: ConfigUpdateRequest, user: User = Depends(require_admin)):
+    payload = {**data.config, "config_id": "pricing"}
+    await db.app_config.update_one({"config_id": "pricing"}, {"$set": payload}, upsert=True)
+    return await get_config()
+
 
 
 @api_router.get("/admin/users")
@@ -1066,6 +1196,33 @@ async def report_pdf(report_id: str, user: User = Depends(get_current_user)):
 
 class ChatMessageRequest(BaseModel):
     message: str
+    confirm: bool = False
+
+
+async def _chat_context(user_id: str):
+    cfg = await get_config()
+    u = await db.users.find_one({"user_id": user_id}, {"_id": 0}) or {}
+    return cfg, u, _membership_active(u), cfg["free_question_limit"], u.get("free_questions_used", 0), u.get("wallet_balance_inr", 0)
+
+
+async def _member_questions_today(user_id: str) -> int:
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    return await db.chat_messages.count_documents({"user_id": user_id, "role": "user", "created_at": {"$gte": today}})
+
+
+@api_router.get("/wallet")
+async def get_wallet(user: User = Depends(get_current_user)):
+    cfg, u, member, free_limit, free_used, balance = await _chat_context(user.user_id)
+    txns = await db.wallet_transactions.find({"user_id": user.user_id}, {"_id": 0}).sort("created_at", -1).to_list(20)
+    return {
+        "balance_inr": balance,
+        "free_remaining": max(0, free_limit - free_used),
+        "member": member,
+        "member_daily_cap": cfg["member_daily_cap"],
+        "wallet_packs": cfg["wallet_packs"],
+        "question_tiers": cfg["question_tiers"],
+        "transactions": txns,
+    }
 
 
 @api_router.get("/chat/{report_id}/messages")
@@ -1076,7 +1233,42 @@ async def list_chat(report_id: str, user: User = Depends(get_current_user)):
     msgs = await db.chat_messages.find(
         {"report_id": report_id, "user_id": user.user_id}, {"_id": 0}
     ).sort("created_at", 1).to_list(500)
-    return {"unlocked": doc.get("unlocked", False), "messages": msgs}
+    cfg, u, member, free_limit, free_used, balance = await _chat_context(user.user_id)
+    return {
+        "unlocked": doc.get("unlocked", False), "messages": msgs,
+        "member": member, "balance_inr": balance, "free_remaining": max(0, free_limit - free_used),
+    }
+
+
+@api_router.post("/chat/{report_id}/estimate")
+async def estimate_chat(report_id: str, data: ChatMessageRequest, user: User = Depends(get_current_user)):
+    cfg, u, member, free_limit, free_used, balance = await _chat_context(user.user_id)
+    est = _estimate_question(data.message, cfg["question_tiers"])
+    if member:
+        cnt = await _member_questions_today(user.user_id)
+        mode = "member_capped" if cnt >= cfg["member_daily_cap"] else "member"
+        return {"mode": mode, "estimate": est, "balance_inr": balance, "member": True, "free_remaining": 0}
+    if free_used < free_limit:
+        return {"mode": "free", "estimate": est, "balance_inr": balance, "member": False, "free_remaining": free_limit - free_used}
+    return {"mode": "paid", "estimate": est, "balance_inr": balance, "member": False,
+            "free_remaining": 0, "need_recharge": balance < est["cost_inr"]}
+
+
+async def _generate_chat_reply(report_id: str, report: Dict[str, Any], user: User) -> str:
+    history = await db.chat_messages.find(
+        {"report_id": report_id, "user_id": user.user_id}, {"_id": 0}
+    ).sort("created_at", 1).to_list(50)
+    sys_msg = (
+        "You are PalmMitra, a warm and precise personal AI life mentor. "
+        "You have exclusive, permanent memory of this user's personalized palm-derived life report (JSON below) "
+        "and your entire past conversation. Never ask them to re-explain themselves. "
+        "Answer grounded in their report and history. Be modern, kind, direct. Never mystical. "
+        "Keep replies concise (2-6 sentences) unless asked for depth.\n\n"
+        f"USER REPORT:\n{json.dumps(report.get('report', {}))[:6000]}"
+    )
+    chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=f"chat_{report_id}", system_message=sys_msg).with_model("openai", "gpt-5.2")
+    convo = "\n".join([f"{m['role'].upper()}: {m['content']}" for m in history[-12:]])
+    return await chat.send_message(UserMessage(text=f"Conversation so far:\n{convo}\n\nRespond as ASSISTANT to the latest USER message."))
 
 
 @api_router.post("/chat/{report_id}/message")
@@ -1087,36 +1279,49 @@ async def send_chat(report_id: str, data: ChatMessageRequest, user: User = Depen
     if not report.get("unlocked"):
         raise HTTPException(status_code=402, detail="Unlock report to chat")
 
+    cfg, u, member, free_limit, free_used, balance = await _chat_context(user.user_id)
+    est = _estimate_question(data.message, cfg["question_tiers"])
+    charged = 0
+    billing_mode = None
+
+    if member:
+        cnt = await _member_questions_today(user.user_id)
+        if cnt >= cfg["member_daily_cap"]:
+            raise HTTPException(status_code=429, detail={"error": "fair_usage", "cap": cfg["member_daily_cap"]})
+        billing_mode = "member"
+    elif free_used < free_limit:
+        await db.users.update_one({"user_id": user.user_id}, {"$inc": {"free_questions_used": 1}})
+        free_used += 1
+        billing_mode = "free"
+    else:
+        cost = est["cost_inr"]
+        if balance < cost:
+            raise HTTPException(status_code=402, detail={"error": "insufficient_balance", "cost_inr": cost, "balance_inr": balance, "estimate": est})
+        if not data.confirm:
+            raise HTTPException(status_code=402, detail={"error": "confirmation_required", "estimate": est, "balance_inr": balance})
+        await db.users.update_one({"user_id": user.user_id}, {"$inc": {"wallet_balance_inr": -cost}})
+        await db.wallet_transactions.insert_one({
+            "user_id": user.user_id, "type": "spend", "amount_inr": -cost,
+            "reason": est["label"], "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+        charged = cost
+        balance -= cost
+        billing_mode = "paid"
+
     now = datetime.now(timezone.utc).isoformat()
     await db.chat_messages.insert_one({
         "report_id": report_id, "user_id": user.user_id,
         "role": "user", "content": data.message, "created_at": now,
     })
-
-    history = await db.chat_messages.find(
-        {"report_id": report_id, "user_id": user.user_id}, {"_id": 0}
-    ).sort("created_at", 1).to_list(50)
-
-    sys_msg = (
-        "You are PalmMitra, a warm and precise AI life guide. "
-        "You have exclusive access to this user's personalized palm-derived life report (JSON below). "
-        "Answer questions grounded in this report. Be modern, kind, direct. Never mystical. "
-        "Keep replies concise (2-6 sentences) unless asked for depth.\n\n"
-        f"USER REPORT:\n{json.dumps(report.get('report', {}))[:6000]}"
-    )
-    session_id = f"chat_{report_id}"
-    chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=session_id, system_message=sys_msg).with_model("openai", "gpt-5.2")
-
-    # Concatenate history as one user turn for simplicity (fresh session_id ensures no library-side state)
-    convo = "\n".join([f"{m['role'].upper()}: {m['content']}" for m in history[-12:]])
-    reply = await chat.send_message(UserMessage(text=f"Conversation so far:\n{convo}\n\nRespond as ASSISTANT to the latest USER message."))
-
+    reply = await _generate_chat_reply(report_id, report, user)
     await db.chat_messages.insert_one({
         "report_id": report_id, "user_id": user.user_id,
-        "role": "assistant", "content": reply,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "role": "assistant", "content": reply, "created_at": datetime.now(timezone.utc).isoformat(),
     })
-    return {"reply": reply}
+    return {
+        "reply": reply, "charged_inr": charged, "balance_inr": balance,
+        "free_remaining": max(0, free_limit - free_used), "billing_mode": billing_mode, "member": member,
+    }
 
 
 # ====================== REFERRALS ======================
