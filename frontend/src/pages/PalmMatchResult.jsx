@@ -1,13 +1,15 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { toPng } from "html-to-image";
 import { api } from "../lib/api";
 import { track } from "../lib/analytics";
 import Nav from "../components/Nav";
-import { Lock, Unlock, Share2, Heart, ShieldCheck, Zap, Star, Sparkles, AlertTriangle } from "lucide-react";
+import { Lock, Unlock, Share2, Heart, ShieldCheck, Zap, Star, Sparkles, AlertTriangle, Download } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
 const COPPER = "#D97757";
 const GOLD = "#E4B248";
+const MANDALA = "https://static.prod-images.emergentagent.com/jobs/488b3307-4a58-4be5-9a80-986d73174ea6/images/a360bd52358a34f288ee1793ba7766a06b4ce2cafc13a3aa92f0e24941218f83.png";
 
 function CompatRing({ score, size = 200 }) {
   const r = size / 2 - 12;
@@ -50,6 +52,8 @@ export default function PalmMatchResult() {
   const [doc, setDoc] = useState(null);
   const [loading, setLoading] = useState(true);
   const [unlocking, setUnlocking] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const cardRef = useRef(null);
 
   const fetchMatch = useCallback(async () => {
     try {
@@ -94,6 +98,29 @@ export default function PalmMatchResult() {
     }
   };
 
+  const shareCard = async () => {
+    if (!cardRef.current) return;
+    setSharing(true);
+    track("palmmatch_share", { report_id: id });
+    try {
+      const dataUrl = await toPng(cardRef.current, { pixelRatio: 2, cacheBust: true, skipFonts: true, backgroundColor: "#050505" });
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], `palmmitra-match-${id}.png`, { type: "image/png" });
+      const compat = doc?.report?.overall_compat;
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "Our PalmMitra Compatibility", text: `We're ${compat}% compatible on PalmMitra ✨` });
+      } else {
+        const a = document.createElement("a");
+        a.href = dataUrl; a.download = file.name; a.click();
+        toast.success("Compatibility card downloaded");
+      }
+    } catch (e) {
+      toast.error("Could not create card");
+    } finally {
+      setSharing(false);
+    }
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center" style={{ background: "#050505" }}><div className="w-10 h-10 border-2 rounded-full animate-spin" style={{ borderColor: "rgba(217,119,87,0.3)", borderTopColor: COPPER }} /></div>;
   }
@@ -112,9 +139,20 @@ export default function PalmMatchResult() {
             <span className="font-serif text-lg" style={{ color: GOLD }}>ॐ Yugal Rekha</span>
             <p className="text-sm text-white/50 mt-1">{doc.name_a || "Partner A"} <span style={{ color: COPPER }}>&amp;</span> {doc.name_b || "Partner B"}</p>
           </div>
-          <button className="text-sm text-white/60 hover:text-white flex items-center gap-2 border border-white/10 rounded-full px-4 py-2" data-testid="match-share-btn" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied"); }}>
-            <Share2 className="w-3.5 h-3.5" /> Share
-          </button>
+          <div className="flex items-center gap-3">
+            <button className="text-sm text-white/60 hover:text-white flex items-center gap-2 border border-white/10 rounded-full px-4 py-2" data-testid="match-share-btn" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied"); }}>
+              <Share2 className="w-3.5 h-3.5" /> Link
+            </button>
+            <button
+              onClick={shareCard}
+              disabled={sharing}
+              data-testid="match-share-card-btn"
+              className="text-sm font-medium flex items-center gap-2 rounded-full px-4 py-2 text-black transition-all hover:-translate-y-0.5 disabled:opacity-50"
+              style={{ background: COPPER }}
+            >
+              <Download className="w-3.5 h-3.5" /> {sharing ? "Creating…" : "Share Card"}
+            </button>
+          </div>
         </div>
 
         {/* Hero: ring + verdict */}
@@ -198,6 +236,64 @@ export default function PalmMatchResult() {
             )}
           </div>
         )}
+      </div>
+
+      {/* Off-screen shareable card */}
+      <div style={{ position: "fixed", left: "-9999px", top: 0 }} aria-hidden>
+        <div
+          ref={cardRef}
+          data-testid="share-card"
+          style={{ width: 540, background: "#050505", color: "#F4F4F5", padding: 44, position: "relative", overflow: "hidden", fontFamily: "'Manrope', sans-serif" }}
+        >
+          <img src={MANDALA} alt="" crossOrigin="anonymous" style={{ position: "absolute", right: -120, top: -120, width: 360, height: 360, opacity: 0.07 }} />
+          <div style={{ position: "relative" }}>
+            {/* brand */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28 }}>
+              <div style={{ width: 28, height: 28, borderRadius: "50%", border: `1px solid ${COPPER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ fontFamily: "'Cormorant Garamond', serif", color: COPPER, fontSize: 15 }}>P</span>
+              </div>
+              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, letterSpacing: "0.02em" }}>PalmMitra</span>
+              <span style={{ marginLeft: "auto", fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.22em", color: "#71717A" }}>AI COMPATIBILITY</span>
+            </div>
+
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 18, color: GOLD, marginBottom: 8 }}>ॐ Yugal Rekha</div>
+
+            {/* names */}
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
+              <span style={{ fontFamily: "'Clash Display', sans-serif", fontSize: 24, fontWeight: 500 }}>{doc.name_a || "Partner A"}</span>
+              <span style={{ color: COPPER, fontSize: 20 }}>♥</span>
+              <span style={{ fontFamily: "'Clash Display', sans-serif", fontSize: 24, fontWeight: 500 }}>{doc.name_b || "Partner B"}</span>
+            </div>
+
+            {/* big score */}
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+              <span style={{ fontFamily: "'Clash Display', sans-serif", fontWeight: 600, fontSize: 96, lineHeight: 1, color: COPPER, letterSpacing: "-0.03em" }}>{r.overall_compat ?? "—"}</span>
+              <span style={{ fontSize: 32, color: "rgba(255,255,255,0.4)" }}>%</span>
+            </div>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 26, color: GOLD, marginTop: 4 }}>{r.verdict || "A remarkable connection"}</div>
+
+            {/* bars */}
+            <div style={{ marginTop: 28, display: "flex", flexDirection: "column", gap: 14 }}>
+              {(r.categories || []).slice(0, 3).map((c, i) => (
+                <div key={i}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
+                    <span style={{ color: "#A1A1AA" }}>{c.name}</span>
+                    <span style={{ color: GOLD }}>{c.score}%</span>
+                  </div>
+                  <div style={{ height: 6, borderRadius: 6, background: "rgba(255,255,255,0.1)", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${c.score || 0}%`, background: COPPER, borderRadius: 6 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* footer CTA */}
+            <div style={{ marginTop: 32, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#A1A1AA" }}>Reveal yours → palmmitra.in</span>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: COPPER }} />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

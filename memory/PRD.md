@@ -53,6 +53,10 @@ Build PalmMitra from scratch — a premium AI Life Guidance Platform where palm 
 - Frontend: `/palmmatch` (A/B upload + names + relationship pills), `/palmmatch/analyzing`, `/palmmatch/:id` (compat ring + category bars + free-preview paywall ₹4,999). Nav "PalmMatch" link + landing "Introducing PalmMatch" section.
 - Verified: backend preview/unlock logic via API (2 free cats, rest gated → full on unlock); frontend via screenshots. NOTE: live LLM analyze (needs 2 real palm images) and real Razorpay checkout not auto-tested — production flows.
 
+## Shareable Compatibility Card (2026-07-01)
+- PalmMatch result page: "Share Card" button generates a branded PNG (html-to-image, `skipFonts:true` to avoid CORS font-fetch failures) — near-black card with PalmMitra brand, ॐ Yugal Rekha, names A♥B, big compat %, verdict, top-3 category bars, mandala watermark, "Reveal yours → palmmitra.in" CTA. Uses Web Share API (files) on mobile, download fallback on desktop. Growth/virality loop.
+- Verified: card downloads and renders correctly via browser test.
+
 ## Next Tasks
 1. Optional polish: hero "40+"→"15+ markers"; refine Nav/Footer `P` mark to copper; add PalmMatch to Dashboard list.
 2. Razorpay webhook listener (`POST /api/payment/webhook`) — prevent lost revenue on early browser close.
